@@ -1,0 +1,154 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>MIDI Monitor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js" integrity="sha512-aMGMvNYu8Ue4G+fHa359jcPb1u+ytAF+P2SCb+PxrjCdO3n3ZTxJ30zuH39rimUggmTwmh2u7wvQsDTHESnmfQ==" crossorigin="anonymous"></script>
+    <script type="text/javascript" charset="utf-8">
+        $(document).ready(function() {
+            // Connect to the Socket.IO server.
+            // The connection URL has the following format, relative to the current page:
+            //     http[s]://<domain>:<port>[/<namespace>]
+            var socket = io();
+
+            // Event handler for new connections.
+            // The callback function is invoked when a connection with the
+            // server is established.
+            socket.on('connect', function() {
+                socket.emit('my_event', {data: 'I\'m connected!'});
+            });
+
+            // Event handler for server sent data.
+            // The callback function is invoked whenever the server emits data
+            // to the client. The data is then displayed in the "Received"
+            // section of the page.
+            socket.on('midi_msg', function(msg, cb) {
+                $('#log').prepend('<br>' + $('<div/>').text('Midi Received: ' + msg.data).html());
+                if (cb)
+                    cb();
+            });
+            socket.on('midi_sent', function(msg, cb) {
+                $('#log').prepend('<br>' + $('<div/>').text('Midi Sent: ' + msg.data).html());
+                if (cb)
+                    cb();
+            });
+
+            socket.on('my_response', function(msg, cb) {
+                $('#log').prepend('<br>' + $('<div/>').text('Server Response: ' + msg.data).html());
+                if (cb)
+                    cb();
+            });
+
+            socket.on('outport', function(msg, cb) {
+                $('#log').prepend('<br>' + $('<div/>').text('Output: ' + msg.outports[msg.port]).html());
+                if (cb)
+                    cb();
+            });
+
+            // Interval function that tests message latency by sending a "ping"
+            // message. The server then responds with a "pong" message and the
+            // round trip time is measured.
+            var ping_pong_times = [];
+            var start_time;
+            window.setInterval(function() {
+                start_time = (new Date).getTime();
+                $('#transport').text(socket.io.engine.transport.name);
+                socket.emit('my_ping');
+            }, 1000);
+
+            // Handler for the "pong" message. When the pong is received, the
+            // time from the ping is stored, and the average of the last 30
+            // samples is average and displayed.
+            socket.on('my_pong', function() {
+                var latency = (new Date).getTime() - start_time;
+                ping_pong_times.push(latency);
+                ping_pong_times = ping_pong_times.slice(-30); // keep last 30 samples
+                var sum = 0;
+                for (var i = 0; i < ping_pong_times.length; i++)
+                    sum += ping_pong_times[i];
+                $('#ping-pong').text(Math.round(10 * sum / ping_pong_times.length) / 10);
+            });
+
+            // Handlers for the different forms in the page.
+            // These accept data from the user and send it to the server in a
+            // variety of ways
+            $('form#io').submit(function(event) {
+                temp = [$('#inputs').val(), $('#outputs').val()]
+                socket.emit('select_io', {data: temp });
+                return false;
+            });
+            $('form#emit').submit(function(event) {
+                socket.emit('my_test', {data: $('#emit_data').val()});
+                return false;
+            });
+            $('form#sendmidinote').submit(function(event) {
+                temp = [$('#note_channel').val(), $('#note').val()]
+                socket.emit('webMidiNoteIn', {data: temp});
+                return false;
+            });
+            $('form#sendpc').submit(function(event) {
+                temp = [$('#pc_channel').val(), $('#program').val()]
+                socket.emit('webPCIn', {data: temp});
+                return false;
+            });
+            $('form#broadcast').submit(function(event) {
+                socket.emit('my_broadcast_event', {data: $('#broadcast_data').val()});
+                return false;
+            });
+            $('form#clear').submit(function(event) {
+                $("#log").html("");
+                return false;
+            });
+        });
+    </script>
+</head>
+
+<body>
+    <h1>MIDI Monitor</h1>
+    <form id="io" method="POST" action='#'>
+      Select Input:
+      <select name="inputs" id="inputs" label="Input">
+        <option value="None">None</option>
+        <option value="All" selected>All</option>
+        <option value="Web">Web Interface</option>
+        {% for n in range(availableInputs| length) %}
+          <option value="{{n}}">{{availableInputs[n]}}</option>
+        {% endfor %}
+      </select>
+      
+      Select Output:
+      <select name="outputs" id="outputs" label="Output">
+        <option value="None">None</option>
+        <option value="All">All</option>
+        {% for n in range(availableOutputs| length) %}
+          <option value="{{n}}" {% if n==activeOutput %} selected {% endif %}>{{ availableOutputs[n] }}</option>
+        {% endfor %}
+      </select>
+      <input type="submit" value="Apply">
+    </form>
+    <h2>Send:</h2>
+    <form id="sendmidinote" method="POST" action='#'>
+        <select name="note_channel" id="note_channel">
+          {% for n in range(1,17) %}
+            <option value="{{n}}">{{ n }}</option>
+          {% endfor %}
+        </select>
+        <input type="number" min="0" max="127" name="note" id="note" placeholder="70" value="70">
+        <input type="submit" value="Send Note">
+    </form>
+    <form id="sendpc" method="POST" action='#'>
+        <select name="pc_channel" id="pc_channel">
+          {% for n in range(1,17) %}
+            <option value="{{n}}">{{ n }}</option>
+          {% endfor %}
+        </select>
+        <input type="number" min="0" max="127" name="program" id="program" placeholder="9" value="9">
+        <input type="submit" value="Send PC">
+    </form>
+    <form id="clear" method="POST" action="#">
+        <input type="submit" value="Clear Log">
+    </form>
+    <h2>Receive:</h2>
+    <div id="log"></div>
+</body>
+</html>

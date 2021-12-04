@@ -1,0 +1,12 @@
+
+.htaccess
+.DS_store
+*.bak
+*.db
+/__pycache__
+/venv
+*.sh
+*.pyc
+/data
+*.log
+logfile.log
