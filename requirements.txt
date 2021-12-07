@@ -10,3 +10,4 @@ python-socketio
 six==1.11.0
 Werkzeug==0.14.1
 python-osc==1.8
+python-socketio[client]

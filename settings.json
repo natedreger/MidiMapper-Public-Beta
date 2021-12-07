@@ -1,1 +1,1 @@
-{"default_output":"protokol", "default_input":"All", "last_input":"All", "last_output":5, "keymap":"keymap.json", "last_keymap":""}
+{"default_output":"Protokol", "default_input":"USB Keystation 61es", "last_input":"All", "last_output":5, "keymap":"keymap.json", "last_keymap":"", "hide_inputs":["Midi Through", "RTMidiIn Client"], "hide_outputs":["RtMidiIn Client", "Midi Through"], "socket_port":5005}

@@ -6,6 +6,7 @@
 
 from flask_socketio import SocketIO
 from flask import Flask, render_template, request
+import json
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -101,12 +102,19 @@ def webMidiNoteIn(message):
 def webPCIn(message):
     socketio.emit('webPCIn', {'data': message['data']})
 
+def load_settings(settings_file):
+    global settings, socket_port
+    file = open(settings_file)
+    settings = json.loads(file.read())
+    socket_port = settings['socket_port']
+    file.close()
 
 
-def server_main():
+def server_main(settings_file):
+    load_settings(settings_file)
     print('Server Main')
     print('[INFO] Starting server at http://localhost:5005')
-    socketio.run(app=app, host='0.0.0.0', port=5005)
+    socketio.run(app=app, host='0.0.0.0', port=socket_port)
 
 if __name__ == "__main__":
     server_main()

@@ -26,7 +26,7 @@ from probe_ports import probe_ports, getAvailableIO
 # logging.basicConfig(level=logging.DEBUG)
 
 # keyMapFile = 'keymap.json'
-settingsFile = 'settings.json'
+# settingsFile = 'settings.json'
 # Default out ports
 outport = 0
 
@@ -157,9 +157,9 @@ def setInputFilter(new_inputs):
         filterInput.append(input)
     print(filterInput)
 
-def load_settings():
+def load_settings(settings_file):
     global settings, defaultInput, defaultOutput, filterInput, ignoreInputs, ignoreOutputs, keyMapFile
-    file = open(settingsFile)
+    file = open(settings_file)
     settings = json.loads(file.read())
     keyMapFile = settings['keymap']
     defaultInput = settings['default_input']
@@ -211,7 +211,7 @@ class MidiInput:
 
 
 
-def midi_main():
+def midi_main(settings_file):
     global midiout, outport_name, inports, filteredOutputList #, global_vars
     inports = getAvailableIO(MidiIn)
     temp = []
@@ -222,7 +222,7 @@ def midi_main():
     inports = temp
 
     # initial setup
-    load_settings()
+    load_settings(settings_file)
 
     # Dynamicly open midi inputs
     try:
