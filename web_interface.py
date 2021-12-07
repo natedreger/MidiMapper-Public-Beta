@@ -43,13 +43,18 @@ def disconnect_web():
 
 @socketio.on('connect')
 def connect_midi():
-    socketio.emit('my_response', {'data': 'Connected', 'count': 0})
+    socketio.emit('my_response', {'data': f'Client {request.sid} Connected', 'count': 0})
     print('[INFO] client connected: {}'.format(request.sid))
 
 @socketio.on('disconnect')
 def disconnect_midi():
     socketio.emit('my_response', {'data': 'Disonnected', 'count': 0})
     print('[INFO] client disconnected: {}'.format(request.sid))
+
+@socketio.on('*')
+def catch_all(event, data):
+    socketio.emit('my_response', {'data': f'{event} {data}', 'count': 0})
+    print(f'[CATCH_ALL] {event} {data}')
 
 ################# forward midi_mapper to web interface ######################3
 @socketio.on('client_msg')
