@@ -3,7 +3,7 @@
 {% block main%}
 <html>
 <head>
-    <title>MIDI Monitor</title>
+    <title>MIDI Monitor - Settings Editor</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js" integrity="sha512-aMGMvNYu8Ue4G+fHa359jcPb1u+ytAF+P2SCb+PxrjCdO3n3ZTxJ30zuH39rimUggmTwmh2u7wvQsDTHESnmfQ==" crossorigin="anonymous"></script>
     <script type="text/javascript" charset="utf-8">
@@ -112,7 +112,7 @@
 </head>
 
 <body>
-    <h1>MIDI Monitor</h1>
+    <h1>Settings</h1>
     <form id="io" method="POST" action='#'>
       Select Input:
       <select name="inputs" id="inputs" label="Input">
@@ -160,4 +160,4 @@
     <div id="log"></div>
 </body>
 </html>
-{% endblock main %}
+{% endblock main%}

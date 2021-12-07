@@ -1,4 +1,8 @@
+#!/usr/bin/env python
+
 # Help from https://github.com/alwaysai/video-streamer on  client-server setup
+
+# web_interface.py
 
 from flask_socketio import SocketIO
 from flask import Flask, render_template, request
@@ -9,10 +13,23 @@ socketio = SocketIO(app)
 
 @app.route('/')
 def index():
-    """Home page."""
-    # return render_template('index.html')
-    return render_template('index.html', async_mode=socketio.async_mode, availableInputs=availableInputs, availableOutputs=availableOutputs, activeOutput=activeOutput)
+    return render_template('index.html', async_mode=socketio.async_mode, \
+                            availableInputs=availableInputs, availableOutputs=availableOutputs,\
+                            activeOutput=activeOutput, activeInput=activeInput)
 
+@app.route('/settings')
+def settings():
+    return render_template('settings.html', async_mode=socketio.async_mode, \
+                            availableInputs=availableInputs, availableOutputs=availableOutputs,\
+                            activeOutput=activeOutput, activeInput=activeInput)
+
+@app.route('/keymap')
+def keymap():
+    return render_template('keymap.html', async_mode=socketio.async_mode, \
+                            availableInputs=availableInputs, availableOutputs=availableOutputs,\
+                            activeOutput=activeOutput, activeInput=activeInput)
+
+################## APP SOCKETS ################################
 @socketio.on('connect')
 def connect_web():
     print('[INFO] Web client connected: {}'.format(request.sid))
@@ -33,33 +50,48 @@ def disconnect_midi():
     socketio.emit('my_response', {'data': 'Disonnected', 'count': 0})
     print('[INFO] client disconnected: {}'.format(request.sid))
 
-@socketio.on('outports')
-def send_outports(message):
-    global availableOutputs
-    availableOutputs = message['data']
-    print(message['data'])
+################# forward midi_mapper to web interface ######################3
+@socketio.on('client_msg')
+def client_msg(message):
+    socketio.emit('my_response', {'data': message})
 
-@socketio.on('output')
-def send_output(message):
-    global activeOutput
-    activeOutput = message['data']
-    print(message['data'])
+@socketio.on('setup')
+def setup(message):
+    global availableInputs, activeOutput, availableOutputs, activeInput
+    availableInputs = message['inputs']
+    activeOutput = message['activeOutput']
+    availableOutputs = message['outputs']
+    activeInput = message['activeInput']
+    settings = message['settings']
+    keymap = message['keymap']
 
-@socketio.on('inports')
-def send_inputs(message):
-    global availableInputs
-    availableInputs = message['data']
-    print(message['data'])
+@socketio.on('io_set')
+def io_set(message):
+    activeInput = message['data']['input']
+    activeOutput = message['data']['output']
+    socketio.emit('confirm_io', {'data': {'input':activeInput, 'output':activeOutput}})
+
+
+#################### forward web_interface to midi_mapper ##################
 
 @socketio.on('midi_msg')
 def handle_midi_message(message):
     socketio.emit('midi_msg', {'data': message['data']})
-    print(message['data'])
+    # print(message['data'])
 
 @socketio.on('midi_sent')
 def handle_midi_sent(message):
     socketio.emit('midi_sent', {'data': message['data']})
-    print(message['data'])
+    # print(message['data'])
+
+@socketio.on('midi_sent')
+def handle_midi_sent(message):
+    socketio.emit('midi_sent', {'data': message['data']})
+    # print(message['data'])
+
+@socketio.event
+def select_io(message):
+    socketio.emit('select_io', {'data': message['data']})
 
 @socketio.event
 def webMidiNoteIn(message):
@@ -68,6 +100,8 @@ def webMidiNoteIn(message):
 @socketio.event
 def webPCIn(message):
     socketio.emit('webPCIn', {'data': message['data']})
+
+
 
 def server_main():
     print('Server Main')
