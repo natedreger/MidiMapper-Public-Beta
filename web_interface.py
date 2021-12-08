@@ -30,6 +30,7 @@ def keymap():
                             availableInputs=availableInputs, availableOutputs=availableOutputs,\
                             activeOutput=activeOutput, activeInput=activeInput)
 
+
 ################## APP SOCKETS ################################
 @socketio.on('connect')
 def connect_web():
@@ -56,6 +57,17 @@ def catch_all(event, data):
     socketio.emit('my_response', {'data': f'{event} {data}', 'count': 0})
     print(f'[CATCH_ALL] {event} {data}')
 
+@socketio.on('get_settings')
+def get_settings(data):
+    load_settings(settingsFile)
+    socketio.emit('settings', {'availableInputs':availableInputs, 'availableOutputs':availableOutputs, \
+                    'activeInput':activeInput, 'activeOutput':activeOutput, 'settings':settings, 'keymap':keymap})
+
+@socketio.on('save_settings')
+def save_settings(data):
+    saveSettings(data, settingsFile)
+    socketio.emit('save_settings',)
+
 ################# forward midi_mapper to web interface ######################3
 @socketio.on('client_msg')
 def client_msg(message):
@@ -63,13 +75,15 @@ def client_msg(message):
 
 @socketio.on('setup')
 def setup(message):
-    global availableInputs, activeOutput, availableOutputs, activeInput
+    global availableInputs, activeOutput, availableOutputs, activeInput, settings, keymap
     availableInputs = message['inputs']
     activeOutput = message['activeOutput']
     availableOutputs = message['outputs']
     activeInput = message['activeInput']
     settings = message['settings']
     keymap = message['keymap']
+    socketio.emit('settings', {'availableInputs':availableInputs, 'availableOutputs':availableOutputs, \
+                    'activeInput':activeInput, 'activeOutput':activeOutput, 'settings':settings, 'keymap':keymap})
 
 @socketio.on('io_set')
 def io_set(message):
@@ -95,6 +109,18 @@ def handle_midi_sent(message):
     socketio.emit('midi_sent', {'data': message['data']})
     # print(message['data'])
 
+@socketio.on('rescan_io')
+def rescan_io():
+    socketio.emit('rescan_io',)
+
+@socketio.on('get_keymap')
+def get_keymap():
+    socketio.emit('reload_keymap',)
+
+@socketio.on('apply_settings')
+def apply_settings():
+    socketio.emit('apply_settings',)
+
 @socketio.event
 def select_io(message):
     socketio.emit('select_io', {'data': message['data']})
@@ -107,13 +133,23 @@ def webMidiNoteIn(message):
 def webPCIn(message):
     socketio.emit('webPCIn', {'data': message['data']})
 
+################ Main Functions ###################################
+
 def load_settings(settings_file):
-    global settings, socket_port
+    global settings, socket_port, settingsFile
+    settingsFile = settings_file
     file = open(settings_file)
     settings = json.loads(file.read())
     socket_port = settings['socket_port']
     file.close()
 
+def saveSettings(data, settings_file):
+    file = open(settings_file)
+    settings = json.loads(file.read())
+    settings['socket_port'] = data['socket_port']
+    file.close()
+    socketio.emit('my_response', {'data': 'Settings Saved'})
+    print('Settings Saved')
 
 def server_main(settings_file):
     load_settings(settings_file)

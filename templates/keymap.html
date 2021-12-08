@@ -16,7 +16,7 @@
             // The callback function is invoked when a connection with the
             // server is established.
             socket.on('connect', function() {
-                socket.emit('my_event', {data: 'I\'m connected!'});
+                socket.emit('get_settings', {data: 'I\'m connected!'});
             });
 
             // Event handler for server sent data.
@@ -76,6 +76,28 @@
                 $('#ping-pong').text(Math.round(10 * sum / ping_pong_times.length) / 10);
             });
 
+            socket.on('settings', function(msg, cb) {
+                availableInputs = msg.availableInputs
+                availableOutputs = msg.availableOutputs
+                activeInput = msg.activeInput
+                activeOutput = msg.activeOutput
+                settings = msg.settings
+                keymap = msg.keymap
+
+                var inputOptions = ['None', 'All', 'Web Interface']
+                inputOptions.push(availableInputs)
+
+                var outputOptions = ['None', 'All']
+                outputOptions.push(availableOutputs)
+
+                $('#log').prepend('<br>' + $('<div/>').text('Keymap Loaded').html());
+
+                $("#keymap").html("");
+                $.each(keymap, function(key,value) {
+                  $('#keymap').append('<br>' + $('<div/>').text(key + ': ' + JSON.stringify(value)).html());
+                });
+              });
+
             // Handlers for the different forms in the page.
             // These accept data from the user and send it to the server in a
             // variety of ways
@@ -102,6 +124,12 @@
                 socket.emit('my_broadcast_event', {data: $('#broadcast_data').val()});
                 return false;
             });
+
+            $("#reload_keymap").click(function(event) {
+                socket.emit('get_keymap');
+                return false;
+              });
+
             $('form#clear').submit(function(event) {
                 $("#log").html("");
                 return false;
@@ -155,7 +183,10 @@
     <form id="clear" method="POST" action="#">
         <input type="submit" value="Clear Log">
     </form>
-    <h2>Receive:</h2>
+    <input id="reload_keymap" type="button" value="Reload Keymap">
+    <h2>Keymap:</h2>
+    <div id="keymap"></div>
+    <h2>Log:</h2>
     <div id="log"></div>
 </body>
 </html>

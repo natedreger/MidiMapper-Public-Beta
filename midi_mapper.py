@@ -12,6 +12,7 @@ import time
 import json
 import queue
 import socketio
+import gc
 
 from pythonosc import udp_client
 
@@ -36,13 +37,16 @@ filterInput = []
 ignoreInputs = []
 ignoreOutputs = []
 filteredOutputList = []
+filteredInputList = []
 message_buffer = []
 indevice = ""
 outdevice = ""
+activeInput = []
+activeOutput = ""
 
-outports = []#getAvailableIO(MidiOut)
+outports = []
 inports = getAvailableIO(MidiIn)
-global_vars = ['m0','m1','m2']
+# global_vars = ['m0','m1','m2']
 
 q = queue.Queue()
 
@@ -53,10 +57,8 @@ server_port = '5005'
 ################ socket IO #######################3
 @sio.event
 def connect():
-    sio.emit('setup', {'outputs':filteredOutputList, 'inputs':inports, \
-            'activeOutput':outports[outport], 'activeInput':defaultInput,\
-            'settings':settings, 'keymap':mappedkeys})
-    print('[INFO] Successfully connected to server.')
+    send_settings()
+    print('[INFO] MIDI Successfully connected to server.')
 
 @sio.event
 def connect_error():
@@ -105,18 +107,31 @@ def select_io(message):
     setInputFilter(temp)
     sio.emit('outport', {'data': 'Connected', 'port': outport, 'outports':outports})
     sio.emit('io_set', {'data': {'input':message['data'][0], 'output':message['data'][1]}})
-    sio.emit('setup', {'outputs':filteredOutputList, 'inputs':inports, \
-            'activeOutput':message['data'][1], 'activeInput':message['data'][0],\
-            'settings':settings, 'keymap':mappedkeys})
-    print(f"Output changed to: {message['data'][1]}")
+    send_settings()
+    print(f"Input Filters changed to: {activeInput}")
+    print(f"Output changed to: {activeOutput}")
 
 @sio.on('rescan_io')
 def rescan_io():
+    scan_io('rescan')
+    send_settings()
 
-    sio.emit('setup', {'outputs':filteredOutputList, 'inputs':inports, \
-            'activeOutput':message['data'][1], 'activeInput':message['data'][0],\
-            'settings':settings, 'keymap':mappedkeys})
-    pass
+@sio.on('reload_keymap')
+def reload_keymap():
+    getMappedKeys()
+    send_settings()
+
+@sio.on('update_settings')
+def update_settings():
+    load_settings(settingsFile)
+    send_settings()
+
+@sio.on('apply_settings')
+def apply_settings():
+    print('apply_settings')
+    # load_settings(settingsFile)
+    # send_settings()
+
 
 def send_ignore(indevice):
     sio.emit('client_msg', f"Message from {indevice} Ignored, outside of filter")
@@ -124,7 +139,13 @@ def send_ignore(indevice):
 def send_client_msg(message):
     sio.emit('client_msg', message)
 
-############### functions #####################
+def send_settings():
+    sio.emit('setup', {'outputs':filteredOutputList, 'inputs':filteredInputList, \
+            'activeOutput':activeOutput, 'activeInput':activeInput,\
+            'settings':settings, 'keymap':mappedkeys})
+
+
+############### main functions #####################
 def searchKeyMap(device, note, exact):
     print(f'searching keymap for note {note} on {device}')
     for key in mappedkeys:
@@ -136,26 +157,31 @@ def searchKeyMap(device, note, exact):
             return key
 
 def searchIO(type, device):
-    global message_buffer
+    global message_buffer, activeInput, activeOutput
     if type == 'input':
         print(f'Searching for Input Port number for {device}')
         if device == 'All':
             portnum = device
+            activeInput=device
         else:
             if device in inports:
                 portnum=inports.index(device)
+                activeInput=device
             else:
                 message_buffer.append(f"Input device {device} not found, setting input to All")
                 print(f"Input device {device} not found, setting input to All")
                 portnum = 'All'
+                activeInput='All'
     elif type == 'output':
         print(f'Searching for Output Port number for {device}')
         if device in outports:
             portnum = outports.index(device)
+            activeOutput = device
         else:
             message_buffer.append(f"Output device {device} not found, setting output to None")
             print(f"Output device {device} not found, setting output to None")
             portnum = 'None'
+            activeOutput = 'None'
     return portnum
 
 def loadKeyMap():
@@ -171,19 +197,22 @@ def getMappedKeys():
     return mappedkeys
 
 def setOutput(port):
-    global outport
+    global outport, activeOutput
     if port != 'None':
         midiout.close_port()
         midiout.open_port(port)
         outport = port
+        activeOutput =outports[port]
     else:
         midiout.close_port()
+        activeOutput = 'None'
 
 def setInputFilter(new_inputs):
-    global filterInput
+    global filterInput, activeInput
     filterInput = []
     for input in new_inputs:
         filterInput.append(input)
+    activeInput = filterInput
     print(filterInput)
 
 def load_settings(settings_file):
@@ -216,12 +245,52 @@ def end_MIDI():
         globals()[x].close_MidiInput()
         del globals()[x]
     midiout.close_port()
+    gc.collect()
     print("MIDI Ports Closed")
+
+def scan_io(type):
+    global midiout, outport_name, inports, filteredOutputList, filteredInputList #, global_vars
+    if type == 'rescan':
+        end_MIDI()
+
+    temp = []
+    temp2 = []
+    filteredInputList.clear()
+    filteredOutputList.clear()
+    outports.clear()
+    inports = getAvailableIO(MidiIn)
+    for i in inports:
+        j = i.split(':')[0]
+        temp2.append(j)
+        if j not in ignoreInputs:
+            temp.append(j)
+    filteredInputList = temp
+    inports = temp2
+
+    # Dynamicly open midi inputs
+    try:
+        # print(inports)
+        for i in range (0, len(inports)):
+            x = f'm{i}'
+            globals()[x] = MidiInput(i, q)
+
+        midiout, outport_name = open_midioutput(outport)
+        temp = midiout.get_ports()
+        for o in temp:
+            l = o.split(':')[0]
+            outports.append(l)
+            if l not in ignoreOutputs:
+                filteredOutputList.append(l)
+        print('MIDI Ports Opened')
+    except (EOFError, KeyboardInterrupt):
+        print("Exit.")
+
 
 class MidiInput:
     def handle_midi_in(self, event, data):
         message, deltatime = event
         q.put([self.device, message])
+
     def close_MidiInput(self):
         self.mi.close_port()
 
@@ -240,48 +309,19 @@ class MidiInput:
 
 
 def midi_main(settings_file):
-    global midiout, outport_name, inports, filteredOutputList #, global_vars
+    global settingsFile
+    settingsFile = settings_file
+    load_settings(settingsFile)
+    scan_io('initial')
+    setOutput(searchIO('output', defaultOutput))
+    searchIO('input', defaultInput)
 
-    inports = getAvailableIO(MidiIn)
-    temp = []
-    for i in inports:
-        j = i.split(':')[0]
-        if j not in ignoreInputs:
-            temp.append(j)
-    inports = temp
-
-    # initial setup
-    load_settings(settings_file)
-
-    # Dynamicly open midi inputs
-    try:
-        for i in range (0, len(inports)):
-            x = f'm{i}'
-            globals()[x] = MidiInput(i, q)
-
-
-        midiout, outport_name = open_midioutput(outport)
-        temp = midiout.get_ports()
-        for o in temp:
-            l = o.split(':')[0]
-            outports.append(l)
-            if l not in ignoreOutputs:
-                filteredOutputList.append(l)
-
-        setOutput(searchIO('output', defaultOutput))
-        searchIO('input', defaultInput)
-
-        getMappedKeys()
-
-    except (EOFError, KeyboardInterrupt):
-        print("Exit.")
-        # sys.exit()
-
-# main program
+    getMappedKeys()
 
     # connect to socketio server
     sio.connect(f'http://{server_addr}:{server_port}')
 
+    # main program
     print("Entering main loop. Press Control-C to exit.")
 
     try:
@@ -299,7 +339,6 @@ def midi_main(settings_file):
                 filter = ('All' in filterInput) or (indevice in filterInput)
                 if velocity > 0 and filter:
                     sio.emit('midi_msg', {'data': f'{msg}'})
-                    print(f"!!!!!!!!!!!!!!!!!!!!!!!! {outport} !!!!!!!!!!!!!!!!!!!!!!!")
                     if outport != 'None':
                         # print(settings['match_device'] == 'True')
                         remap = searchKeyMap(indevice, note, settings['match_device'] == 'True')

@@ -1,4 +1,4 @@
-<!DOCTYPE HTML>
+  <!DOCTYPE HTML>
 {% extends 'base.html' %}
 {% block main%}
 <html>
@@ -17,29 +17,13 @@
             // The callback function is invoked when a connection with the
             // server is established.
             socket.on('connect', function() {
-                socket.emit('my_event', {data: 'I\'m connected!'});
+                socket.emit('get_settings', {data: 'I\'m connected!'});
             });
 
             // Event handler for server sent data.
             // The callback function is invoked whenever the server emits data
             // to the client. The data is then displayed in the "Received"
             // section of the page.
-            socket.on('midi_msg', function(msg, cb) {
-                $('#log').prepend('<br>' + $('<div/>').text('Midi Received: ' + msg.data).html());
-                if (cb)
-                    cb();
-            });
-            socket.on('midi_sent', function(msg, cb) {
-                $('#log').prepend('<br>' + $('<div/>').text('Midi Sent: ' + msg.data).html());
-                if (cb)
-                    cb();
-            });
-
-            socket.on('confirm_io', function(msg, cb) {
-                $('#log').prepend('<br>' + $('<div/>').text('Input: ' + msg.data['input'] + ' Output: ' + msg.data['output']).html());
-                if (cb)
-                    cb();
-            });
 
             socket.on('my_response', function(msg, cb) {
                 $('#log').prepend('<br>' + $('<div/>').text('Server Response: ' + msg.data).html());
@@ -47,11 +31,6 @@
                     cb();
             });
 
-            socket.on('outport', function(msg, cb) {
-                $('#log').prepend('<br>' + $('<div/>').text('Output: ' + msg.outports[msg.port]).html());
-                if (cb)
-                    cb();
-            });
 
             // Interval function that tests message latency by sending a "ping"
             // message. The server then responds with a "pong" message and the
@@ -77,6 +56,28 @@
                 $('#ping-pong').text(Math.round(10 * sum / ping_pong_times.length) / 10);
             });
 
+            socket.on('settings', function(msg, cb) {
+                availableInputs = msg.availableInputs
+                availableOutputs = msg.availableOutputs
+                activeInput = msg.activeInput
+                activeOutput = msg.activeOutput
+                settings = msg.settings
+                keymap = msg.keymap
+
+                var inputOptions = ['None', 'All', 'Web Interface']
+                inputOptions.push(availableInputs)
+
+                var outputOptions = ['None', 'All']
+                outputOptions.push(availableOutputs)
+
+                $("#log").html("");
+                $('#log').append('<br>' + $('<div/>').text('Settings Loaded' + settings).html());
+
+                $.each(settings, function(key,value) {
+                  $('#log').prepend('<br>' + $('<div/>').text(key + ': ' + value).html());
+                });
+            });
+
             // Handlers for the different forms in the page.
             // These accept data from the user and send it to the server in a
             // variety of ways
@@ -85,24 +86,23 @@
                 socket.emit('select_io', {data: temp });
                 return false;
             });
-            $('form#emit').submit(function(event) {
-                socket.emit('my_test', {data: $('#emit_data').val()});
+
+            $("#reload_settings").click(function(event) {
+                socket.emit('get_settings','');
                 return false;
-            });
-            $('form#sendmidinote').submit(function(event) {
-                temp = [$('#note_channel').val(), $('#note').val()]
-                socket.emit('webMidiNoteIn', {data: temp});
+              });
+
+            $("#apply_settings").click(function(event) {
+                socket.emit('save_settings',settings);
+                socket.emit('apply_settings');
                 return false;
-            });
-            $('form#sendpc').submit(function(event) {
-                temp = [$('#pc_channel').val(), $('#program').val()]
-                socket.emit('webPCIn', {data: temp});
+              });
+
+            $("#save_settings").click(function(event) {
+                socket.emit('save_settings', settings);
                 return false;
-            });
-            $('form#broadcast').submit(function(event) {
-                socket.emit('my_broadcast_event', {data: $('#broadcast_data').val()});
-                return false;
-            });
+              });
+
             $('form#clear').submit(function(event) {
                 $("#log").html("");
                 return false;
@@ -116,43 +116,28 @@
     <form id="io" method="POST" action='#'>
       Select Input:
       <select name="inputs" id="inputs" label="Input">
-        <option value="None">None</option>
+        <!-- <option value="None">None</option>
         <option value="All" selected>All</option>
         <option value="Web Interface">Web Interface</option>
         {% for n in range(availableInputs| length) %}
           <option value="{{ availableInputs[n] }}" {% if availableInputs[n]==activeInput %} selected {% endif %}>{{ availableInputs[n] }}</option>
-        {% endfor %}
+        {% endfor %} -->
       </select>
 
       Select Output:
       <select name="outputs" id="outputs" label="Output">
-        <option value="None">None</option>
+        <!-- <option value="None">None</option>
         <option value="All">All</option>
         {% for n in range(availableOutputs| length) %}
           <option value="{{ availableOutputs[n] }}" {% if availableOutputs[n]==activeOutput %} selected {% endif %}>{{ availableOutputs[n] }}</option>
         {% endfor %}
-      </select>
+      </select> -->
       <input type="submit" value="Apply">
     </form>
-    <h2>Send:</h2>
-    <form id="sendmidinote" method="POST" action='#'>
-        <select name="note_channel" id="note_channel">
-          {% for n in range(1,17) %}
-            <option value="{{n}}">{{ n }}</option>
-          {% endfor %}
-        </select>
-        <input type="number" min="0" max="127" name="note" id="note" placeholder="70" value="70">
-        <input type="submit" value="Send Note">
-    </form>
-    <form id="sendpc" method="POST" action='#'>
-        <select name="pc_channel" id="pc_channel">
-          {% for n in range(1,17) %}
-            <option value="{{n}}">{{ n }}</option>
-          {% endfor %}
-        </select>
-        <input type="number" min="0" max="127" name="program" id="program" placeholder="9" value="9">
-        <input type="submit" value="Send PC">
-    </form>
+
+    <input id="reload_settings" type="button" value="Reload Settings">
+    <input id="save_settings" type="button" value="Save Settings">
+    <input id="apply_settings" type="button" value="Apply Settings">
     <form id="clear" method="POST" action="#">
         <input type="submit" value="Clear Log">
     </form>
