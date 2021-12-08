@@ -154,7 +154,7 @@ def saveSettings(data, settings_file):
 def server_main(settings_file):
     load_settings(settings_file)
     print('Server Main')
-    print('[INFO] Starting server at http://localhost:5005')
+    print(f'[INFO] Starting server at http://localhost:{socket_port}')
     socketio.run(app=app, host='0.0.0.0', port=socket_port)
 
 if __name__ == "__main__":
