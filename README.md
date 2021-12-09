@@ -16,8 +16,8 @@ Still To Do :
 - [ ] Edit keymap via web interface
 - [ ] Edit settings via web interface
 - [x] Change midi mode via web interface
-- [ ] Match mapping device control
-- [ ] remove lag from mode change
+- [x] Match mapping device control
+- [x] remove lag from mode change
 -
 
 Future features to implement :
@@ -26,8 +26,9 @@ Future features to implement :
 - [ ] Channel Routing
 - [ ] Device to Device mapping
 
-Built with :
+Built using :
 - python-rtmidi
 - Flask-SocketIO
 - Flask
 - python-osc
+- python-socketio[client]
