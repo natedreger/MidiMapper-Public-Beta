@@ -44,6 +44,7 @@ outdevice = ""
 activeInput = []
 activeOutput = ""
 outports = []
+midi_mode = 'thru'
 inports = getAvailableIO(MidiIn)
 # global_vars = ['m0','m1','m2']
 
@@ -120,6 +121,20 @@ def reload_keymap():
     getMappedKeys()
     send_settings()
 
+@sio.on('set_mode')
+def set_mode(message):
+    global midi_mode
+    midi_mode = message
+    send_settings()
+    print(f"MIDI Mode changed to: {midi_mode}")
+
+@sio.on('exact_match')
+def exact_match(message):
+    global match_device
+    match_device = message
+    send_settings()
+    print(f"Match device changed to: {match_device}")
+
 @sio.on('update_settings')
 def update_settings():
     load_settings(settingsFile)
@@ -127,9 +142,9 @@ def update_settings():
 
 @sio.on('apply_settings')
 def apply_settings():
-    print('apply_settings')
-    # load_settings(settingsFile)
-    # send_settings()
+    load_settings(settingsFile)
+    scan_io('rescan')
+    send_settings()
 
 
 def send_ignore(indevice):
@@ -139,7 +154,7 @@ def send_client_msg(message):
     sio.emit('client_msg', message)
 
 def send_settings():
-    sio.emit('setup', {'outputs':filteredOutputList, 'inputs':filteredInputList, \
+    sio.emit('setup', {'midi_mode':midi_mode, 'outputs':filteredOutputList, 'inputs':filteredInputList, \
             'activeOutput':activeOutput, 'activeInput':activeInput,\
             'settings':settings, 'keymap':mappedkeys})
 
@@ -151,8 +166,8 @@ def searchKeyMap(device, note, exact):
         if exact:
             device = device
         else:
-            device = key['device']
-        if (str(key['note']) == str(note)) and (key['device'] == device):
+            device = key['input_device']
+        if (str(key['note']) == str(note)) and (key['input_device'] == device):
             return key
 
 def searchIO(type, device):
@@ -171,6 +186,7 @@ def searchIO(type, device):
                 print(f"Input device {device} not found, setting input to All")
                 portnum = 'All'
                 activeInput='All'
+
     elif type == 'output':
         print(f'Searching for Outputs for {device}')
         if device in outports:
@@ -215,16 +231,20 @@ def setInputFilter(new_inputs):
     print(filterInput)
 
 def load_settings(settings_file):
-    global settings, defaultInput, defaultOutput, filterInput, ignoreInputs, ignoreOutputs, keyMapFile, socket_port
+    global settings, defaultInput, defaultOutput, filterInput, ignoreInputs, \
+            ignoreOutputs, keyMapFile, socket_port, midi_mode, match_device
     file = open(settings_file)
     settings = json.loads(file.read())
     keyMapFile = settings['keymap']
     defaultInput = settings['default_input']
-    filterInput.append(defaultInput)
     defaultOutput = settings['default_output']
     ignoreInputs = settings['hide_inputs']
     ignoreOutputs = settings['hide_outputs']
     socket_port = settings['socket_port']
+    midi_mode = settings['midi_mode']
+    match_device = settings['match_device']
+    filterInput.clear()
+    filterInput.append(defaultInput)
     print(settings)
     file.close()
 
@@ -249,7 +269,7 @@ def end_MIDI():
     print("MIDI Ports Closed")
 
 def scan_io(type):
-    global midiout, outport_name, inports, filteredOutputList, filteredInputList, activeOutput, count
+    global midiout, outport_name, inports, filteredOutputList, filteredInputList, activeOutput, activeInput
     if type == 'rescan':
         end_MIDI()
 
@@ -285,11 +305,14 @@ def scan_io(type):
                 filteredOutputList.append(l)
 
         print('MIDI Ports Opened')
+
+        # select default i\o if available
         if type == 'rescan':
             if defaultOutput in outports:
                 setOutput(searchIO('output', defaultOutput))
             if activeOutput not in outports:
                 activeOutput = 'None'
+            searchIO('input', defaultInput)
 
     except (EOFError):
         print('Something Went Wrong')
@@ -321,7 +344,7 @@ class MidiInput:
 
 
 def midi_main(settings_file):
-    global settingsFile
+    global settingsFile, midi_mode
     settingsFile = settings_file
     load_settings(settingsFile)
     scan_io('initial')
@@ -338,49 +361,75 @@ def midi_main(settings_file):
 
     try:
         try:
-            timer = time.time()
             while True:
-                msg = q.get(1)
-                if msg:
+                timer = time.time()
+                # midi_mode = 'thru'
+                while midi_mode == 'mapped':
+                    msg = q.get(1)
+                    if msg:
+                        indevice = msg[0]
+                        message = msg[1]
+                        print("[%s] %r" % (indevice, message))
+
+                        channel=message[0]-143
+                        note=message[1]
+                        velocity=message[2]
+
+                        if channel > 16:
+                            if note == 64:
+                                message_type = 'sustain'
+                            elif note == 7:
+                                message_type = 'volume'
+                            else:
+                                message_type = 'control'
+                        else:
+                            message_type = 'note'
+                        filter = ('All' in filterInput) or (indevice in filterInput)
+                        if velocity > 0 and filter and message_type == 'note':
+                            sio.emit('midi_msg', {'data': f'{msg}'})
+                            if activeOutput != 'None':
+                                # print(settings['match_device'] == 'True')
+                                remap = searchKeyMap(indevice, note, settings['match_device'] == 'True')
+                                if remap:
+                                    print(f"Mapping for note {note} on {indevice} found")
+                                    if remap['type'] == 'PC':
+                                        mw = MidiOutWrapper(midiout, ch=remap['channel'])
+                                        mw.send_program_change(remap['value'])
+                                        print(f"PC sent channel: {remap['channel']} value: {remap['value']}")
+                                        sio.emit('midi_sent', {'data': f"Mapped to PC channel: {remap['channel']} value: {remap['value']}"})
+                                    elif remap['type'] == 'NOTE_ON':
+                                        mw = MidiOutWrapper(midiout, ch=remap['channel'])
+                                        mw.send_note_on(remap['new_note'])
+                                        print(f"sent NOTE_ON {remap['new_note']}")
+                                        sio.emit('midi_sent', {'data': f"Mapped to NOTE_ON Channel: {remap['channel']} Note: {remap['new_note']}"})
+                                    elif remap['type'] == 'OSC':
+                                        OSC_client = udp_client.SimpleUDPClient(remap['host'], remap['port'])
+                                        OSC_client.send_message(remap['message'],'')
+                                        print(f'OSC message {remap["message"]}')
+                                        sio.emit('midi_sent', {'data': f"Mapped to OSC message {remap['message']}"})
+                                else:
+                                    mw = MidiOutWrapper(midiout, ch=channel)
+                                    mw.send_note_on(note)
+                                    print(f"No mapping for note {note} on {indevice} found")
+                                    print(f'sent {note}')
+                                    sio.emit('midi_sent', {'data': f'Channel: {channel} Note: {note}'})
+                                time.sleep(0.1)
+                        elif (velocity > 0) and (not filter) and (not 'None' in filterInput):
+                            print(filterInput)
+                            send_ignore(indevice)
+                time.sleep(0.01)
+                while midi_mode == 'thru':
+                    msg = q.get(1)
                     indevice = msg[0]
                     message = msg[1]
                     print("[%s] %r" % (indevice, message))
+
                     channel=message[0]-143
                     note=message[1]
                     velocity=message[2]
-                    print(filterInput)
-                    filter = ('All' in filterInput) or (indevice in filterInput)
-                    if velocity > 0 and filter:
-                        sio.emit('midi_msg', {'data': f'{msg}'})
-                        if activeOutput != 'None':
-                            # print(settings['match_device'] == 'True')
-                            remap = searchKeyMap(indevice, note, settings['match_device'] == 'True')
-                            if remap:
-                                if remap['type'] == 'PC':
-                                    mw = MidiOutWrapper(midiout, ch=remap['channel'])
-                                    mw.send_program_change(remap['value'])
-                                    print(f"PC sent channel: {remap['channel']} value: {remap['value']}")
-                                    sio.emit('midi_sent', {'data': f"Mapped to PC channel: {remap['channel']} value: {remap['value']}"})
-                                elif remap['type'] == 'NOTE_ON':
-                                    mw = MidiOutWrapper(midiout, ch=remap['channel'])
-                                    mw.send_note_on(remap['new_note'])
-                                    print(f"sent NOTE_ON {remap['new_note']}")
-                                    sio.emit('midi_sent', {'data': f"Mapped to NOTE_ON Channel: {remap['channel']} Note: {remap['new_note']}"})
-                                elif remap['type'] == 'OSC':
-                                    OSC_client = udp_client.SimpleUDPClient(remap['host'], remap['port'])
-                                    OSC_client.send_message(remap['message'],'')
-                                    print(f'OSC message {remap["message"]}')
-                                    sio.emit('midi_sent', {'data': f"Mapped to OSC message {remap['message']}"})
-                            else:
-                                mw = MidiOutWrapper(midiout, ch=channel)
-                                mw.send_note_on(note)
-                                print(f'sent {note}')
-                                sio.emit('midi_sent', {'data': f'Channel: {channel} Note: {note}'})
-                            time.sleep(0.1)
-                    elif (velocity > 0) and (not filter) and (not 'None' in filterInput):
-                        print(filterInput)
-                        send_ignore(indevice)
-            time.sleep(0.01)
+
+                    mw = MidiOutWrapper(midiout, ch=channel)
+                    mw.send_note_on(note, velocity)
         except:
             print('Something Went Wrong')
             sio.emit('client_msg', 'Something Went Wrong with MIDI')

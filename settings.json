@@ -1,1 +1,13 @@
-{"default_output":"Protokol", "default_input":"All", "last_input":"All", "match_device":"False", "last_output":5, "keymap":"keymap.json", "last_keymap":"", "hide_inputs":["Midi Through", "RtMidiOut Client"], "hide_outputs":["RtMidiIn Client", "Midi Through"], "socket_port":5005}
+{
+  "midi_mode":"thru",
+  "default_output":"USB MIDI Interface",
+  "default_input":"All",
+  "last_input":"All",
+  "match_device":"True",
+  "last_output":5,
+  "keymap":"keymap.json",
+  "last_keymap":"",
+  "hide_inputs":["Midi Through", "RtMidiOut Client"],
+  "hide_outputs":["RtMidiIn Client", "Midi Through"],
+  "socket_port":5005
+}

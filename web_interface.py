@@ -60,13 +60,18 @@ def catch_all(event, data):
 @socketio.on('get_settings')
 def get_settings(data):
     load_settings(settingsFile)
-    socketio.emit('settings', {'availableInputs':availableInputs, 'availableOutputs':availableOutputs, \
-                    'activeInput':activeInput, 'activeOutput':activeOutput, 'settings':settings, 'keymap':keymap})
+    send_settings()
+    # socketio.emit('settings', {'midi_mode':midi_mode, 'availableInputs':availableInputs, 'availableOutputs':availableOutputs, \
+    #                 'activeInput':activeInput, 'activeOutput':activeOutput, 'settings':settings, 'keymap':keymap})
 
 @socketio.on('save_settings')
 def save_settings(data):
     saveSettings(data, settingsFile)
     socketio.emit('save_settings',)
+
+def send_settings():
+    socketio.emit('settings', {'midi_mode':midi_mode, 'availableInputs':availableInputs, 'availableOutputs':availableOutputs, \
+                    'activeInput':activeInput, 'activeOutput':activeOutput, 'settings':settings, 'keymap':keymap})
 
 ################# forward midi_mapper to web interface ######################3
 @socketio.on('client_msg')
@@ -75,15 +80,17 @@ def client_msg(message):
 
 @socketio.on('setup')
 def setup(message):
-    global availableInputs, activeOutput, availableOutputs, activeInput, settings, keymap
+    global midi_mode, availableInputs, activeOutput, availableOutputs, activeInput, settings, keymap
     availableInputs = message['inputs']
     activeOutput = message['activeOutput']
     availableOutputs = message['outputs']
     activeInput = message['activeInput']
     settings = message['settings']
     keymap = message['keymap']
-    socketio.emit('settings', {'availableInputs':availableInputs, 'availableOutputs':availableOutputs, \
-                    'activeInput':activeInput, 'activeOutput':activeOutput, 'settings':settings, 'keymap':keymap})
+    midi_mode = message['midi_mode']
+    send_settings()
+    # socketio.emit('settings', {'midi_mode':midi_mode, 'availableInputs':availableInputs, 'availableOutputs':availableOutputs, \
+    #                 'activeInput':activeInput, 'activeOutput':activeOutput, 'settings':settings, 'keymap':keymap})
 
 @socketio.on('io_set')
 def io_set(message):
@@ -108,6 +115,14 @@ def handle_midi_sent(message):
 def handle_midi_sent(message):
     socketio.emit('midi_sent', {'data': message['data']})
     # print(message['data'])
+
+@socketio.on('set_mode')
+def set_mode(message):
+    socketio.emit('set_mode',message)
+
+@socketio.on('exact_match')
+def exact_match(message):
+    socketio.emit('exact_match',message)
 
 @socketio.on('rescan_io')
 def rescan_io():

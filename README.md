@@ -4,21 +4,24 @@ I built MidiMapper to be a one stop shop for controlling various devices using U
 
 At it's most basic is a USB MIDI host to convert between USB keyboards and traditional 5-Pin MIDI. A 'thru' mode allows MIDI to pass directly from one device to another with minimal latency.
 
-On a more advanced level MidiMapper allows keymaps to be created allowing note on commands to be converted to any of the following :
+On a more advanced level MidiMapper allows keymaps to be created allowing note on commands to be converted to any of the following types:
 
-- transform one note to any other note with channel
-- note to program change 
-- note to OSC
+- MIDI NOTE_ON (with channel)
+- Program Change
+- OSC command
 
 MidiMapper also contains a builtin web interface for monitoring and setup.
 
 Still To Do :
 - [ ] Edit keymap via web interface
 - [ ] Edit settings via web interface
-- [ ] Change midi mode via web interface
+- [x] Change midi mode via web interface
+- [ ] Match mapping device control
+- [ ] remove lag from mode change
+- 
 
 Future features to implement :
 - [ ] note to GPIO
 - [ ] OSC to MIDI
-
-
+- [ ] Channel Change mapping
+- [ ] Device to Device mapping

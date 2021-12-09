@@ -62,31 +62,33 @@
                 availableOutputs = msg.availableOutputs
                 activeInput = msg.activeInput
                 activeOutput = msg.activeOutput
+                midi_mode = msg.midi_mode
                 settings = msg.settings
-                keymap = msg.keymap
+                match_device = settings['match_device']
+                // keymap = msg.keymap
 
-                var inputOptions = ['None', 'All', 'Web Interface']
-                inputOptions.push(availableInputs)
+                // select the correct mode
+                $('#log').prepend('<br>' + $('<div/>').text('MIDI Mode: ' + midi_mode).html());
+                $('#midi_mode option[value="thru"]').removeAttr('selected');
+                $('#midi_mode option[value="mapped"]').removeAttr('selected');
+                $('#midi_mode option[value="'+midi_mode+'"]').attr('selected','selected');
 
-                var outputOptions = ['None', 'All']
-                outputOptions.push(availableOutputs)
+                $('#exact_match').removeAttr('checked');
+                if (match_device == 'True') {
+                  $('#exact_match').attr('checked', 'checked');
+                }
 
                 $("#log").html("");
-                $('#log').append('<br>' + $('<div/>').text('Settings Loaded' + settings).html());
+                $('#log').append('<br>' + $('<div/>').text('Settings Loaded:').html());
 
                 $.each(settings, function(key,value) {
-                  $('#log').prepend('<br>' + $('<div/>').text(key + ': ' + value).html());
+                  $('#log').append('<br>' + $('<div/>').text(key + ': ' + value).html());
                 });
             });
 
             // Handlers for the different forms in the page.
             // These accept data from the user and send it to the server in a
             // variety of ways
-            $('form#io').submit(function(event) {
-                temp = [$('#inputs').val(), $('#outputs').val()]
-                socket.emit('select_io', {data: temp });
-                return false;
-            });
 
             $("#reload_settings").click(function(event) {
                 socket.emit('get_settings','');
@@ -104,6 +106,16 @@
                 return false;
               });
 
+            $("#set_mode").click(function(event) {
+                socket.emit('set_mode', $('#midi_mode').val());
+                return false;
+            });
+
+            $("#exact_match").change(function(event) {
+                socket.emit('exact_match', $('#exact_match').is(':checked'));
+                return false;
+            });
+
             $('form#clear').submit(function(event) {
                 $("#log").html("");
                 return false;
@@ -114,31 +126,20 @@
 
 <body>
     <h1>Settings</h1>
-    <form id="io" method="POST" action='#'>
-      Select Input:
-      <select name="inputs" id="inputs" label="Input">
-        <!-- <option value="None">None</option>
-        <option value="All" selected>All</option>
-        <option value="Web Interface">Web Interface</option>
-        {% for n in range(availableInputs| length) %}
-          <option value="{{ availableInputs[n] }}" {% if availableInputs[n]==activeInput %} selected {% endif %}>{{ availableInputs[n] }}</option>
-        {% endfor %} -->
+    {% include "io_form.html" %}
+    <div style="padding-top:10px; padding-bottom:10px">
+      <select id="midi_mode">
+        <option value='mapped'>Mapped</option>
+        <option value='thru'>Thru</option>
       </select>
-
-      Select Output:
-      <select name="outputs" id="outputs" label="Output">
-        <!-- <option value="None">None</option>
-        <option value="All">All</option>
-        {% for n in range(availableOutputs| length) %}
-          <option value="{{ availableOutputs[n] }}" {% if availableOutputs[n]==activeOutput %} selected {% endif %}>{{ availableOutputs[n] }}</option>
-        {% endfor %}
-      </select> -->
-      <input type="submit" value="Apply">
-    </form>
-
-    <input id="reload_settings" type="button" value="Reload Settings">
-    <input id="save_settings" type="button" value="Save Settings">
-    <input id="apply_settings" type="button" value="Apply Settings">
+      <input id="set_mode" type="button" value="Set Mode">
+      <input id="exact_match" type="checkbox"><label for="exact_match">Match Input Device</label>
+    </div>
+    <div style="padding-bottom:10px">
+      <input id="reload_settings" type="button" value="Reload Settings">
+      <input id="save_settings" type="button" value="Save Settings">
+      <input id="apply_settings" type="button" value="Apply Settings">
+    </div>
     <form id="clear" method="POST" action="#">
         <input type="submit" value="Clear Log">
     </form>

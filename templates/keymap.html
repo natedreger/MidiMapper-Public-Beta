@@ -84,12 +84,6 @@
                 settings = msg.settings
                 keymap = msg.keymap
 
-                var inputOptions = ['None', 'All', 'Web Interface']
-                inputOptions.push(availableInputs)
-
-                var outputOptions = ['None', 'All']
-                outputOptions.push(availableOutputs)
-
                 $('#log').prepend('<br>' + $('<div/>').text('Keymap Loaded').html());
 
                 $("#keymap").html("");
@@ -101,15 +95,6 @@
             // Handlers for the different forms in the page.
             // These accept data from the user and send it to the server in a
             // variety of ways
-            $('form#io').submit(function(event) {
-                temp = [$('#inputs').val(), $('#outputs').val()]
-                socket.emit('select_io', {data: temp });
-                return false;
-            });
-            $('form#emit').submit(function(event) {
-                socket.emit('my_test', {data: $('#emit_data').val()});
-                return false;
-            });
             $('form#sendmidinote').submit(function(event) {
                 temp = [$('#note_channel').val(), $('#note').val()]
                 socket.emit('webMidiNoteIn', {data: temp});
@@ -118,10 +103,6 @@
             $('form#sendpc').submit(function(event) {
                 temp = [$('#pc_channel').val(), $('#program').val()]
                 socket.emit('webPCIn', {data: temp});
-                return false;
-            });
-            $('form#broadcast').submit(function(event) {
-                socket.emit('my_broadcast_event', {data: $('#broadcast_data').val()});
                 return false;
             });
 
@@ -140,27 +121,7 @@
 
 <body>
     <h1>Keymap</h1>
-    <form id="io" method="POST" action='#'>
-      Select Input:
-      <select name="inputs" id="inputs" label="Input">
-        <option value="None">None</option>
-        <option value="All" selected>All</option>
-        <option value="Web Interface">Web Interface</option>
-        {% for n in range(availableInputs| length) %}
-          <option value="{{ availableInputs[n] }}" {% if availableInputs[n]==activeInput %} selected {% endif %}>{{ availableInputs[n] }}</option>
-        {% endfor %}
-      </select>
-
-      Select Output:
-      <select name="outputs" id="outputs" label="Output">
-        <option value="None">None</option>
-        <option value="All">All</option>
-        {% for n in range(availableOutputs| length) %}
-          <option value="{{ availableOutputs[n] }}" {% if availableOutputs[n]==activeOutput %} selected {% endif %}>{{ availableOutputs[n] }}</option>
-        {% endfor %}
-      </select>
-      <input type="submit" value="Apply">
-    </form>
+    {% include "io_form.html" %}
     <h2>Send:</h2>
     <form id="sendmidinote" method="POST" action='#'>
         <select name="note_channel" id="note_channel">
