@@ -18,10 +18,16 @@ Still To Do :
 - [x] Change midi mode via web interface
 - [ ] Match mapping device control
 - [ ] remove lag from mode change
-- 
+-
 
 Future features to implement :
 - [ ] note to GPIO
 - [ ] OSC to MIDI
-- [ ] Channel Change mapping
+- [ ] Channel Routing
 - [ ] Device to Device mapping
+
+Built with :
+- python-rtmidi
+- Flask-SocketIO
+- Flask
+- python-osc
