@@ -127,7 +127,7 @@ def set_mode(message):
     midi_mode = message
     send_settings()
     print(f"MIDI Mode changed to: {midi_mode}")
-    q.put(['dummy message', [-1,-1,-1]])
+    q.put(['dummy message', [0,0,0]])
 
 @sio.on('exact_match')
 def exact_match(message):
@@ -147,6 +147,10 @@ def apply_settings():
     scan_io('rescan')
     send_settings()
 
+@sio.on('restart_midi')
+def restart_midi():
+    # sio.disconnect()
+    print('MIDI Restarted')
 
 def send_ignore(indevice):
     sio.emit('client_msg', f"Message from {indevice} Ignored, outside of filter")
@@ -362,6 +366,7 @@ class MidiInput:
         self.device = self.mi.get_port_name(pn, encoding=u'auto').split(':')[0]
         self.mi.set_callback(self.handle_midi_in)
 
+
 def midi_main(settings_file):
     global settingsFile, midi_mode
     settingsFile = settings_file
@@ -369,11 +374,17 @@ def midi_main(settings_file):
     scan_io('initial')
     setOutput(searchIO('output', defaultOutput))
     searchIO('input', defaultInput)
-
     getMappedKeys()
 
-    # connect to socketio server
-    sio.connect(f'http://{server_addr}:{socket_port}')
+    connected = False
+    while not connected:
+        try:
+            sio.connect(f'http://{server_addr}:{socket_port}')
+        except socketio.exceptions.ConnectionError as err:
+            print("ConnectionError: %s", err)
+        else:
+            print("Connected!")
+            connected = True
 
     # main program
     print("Entering MIDI loop. ")
@@ -423,14 +434,17 @@ def midi_main(settings_file):
 
                 while midi_mode == 'thru':
                     msg = MidiMessage(q.get(1))
+                    sio.emit('midi_msg', {'data': f'{msg.indevice} : {msg.midi}'})
                     if msg.message_type == 'note':
                         mw = MidiOutWrapper(midiout, ch=msg.channel)
                         mw.send_note_on(msg.note, msg.velocity)
                         print(f"Sent {msg.note} on Channel: {msg.channel}")
+                        sio.emit('midi_sent', {'data': f"Channel: {msg.channel} Note: {msg.note}"})
                     elif msg.message_type == 'sustain':
                         mw = MidiOutWrapper(midiout, ch=msg.channel)
                         mw.send_control_change(64, msg.velocity, ch=msg.channel)
                         print(f"Sent sustain on Channel: {msg.channel}")
+                        sio.emit('midi_sent', {'data': f"Sent sustain on Channel: {msg.channel}"})
                     else:
                         print(msg.message_type)
 

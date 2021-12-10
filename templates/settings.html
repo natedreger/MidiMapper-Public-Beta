@@ -106,6 +106,21 @@
                 return false;
               });
 
+            $("#restart_midi").click(function(event) {
+                socket.emit('restart_midi');
+                return false;
+              });
+
+            $("#restart_server").click(function(event) {
+                socket.emit('restart_server');
+                return false;
+              });
+
+            $("#quit").click(function(event) {
+                socket.emit('quit');
+                return false;
+              });
+
             $("#set_mode").click(function(event) {
                 socket.emit('set_mode', $('#midi_mode').val());
                 return false;
@@ -139,6 +154,9 @@
       <input id="reload_settings" type="button" value="Reload Settings">
       <input id="save_settings" type="button" value="Save Settings">
       <input id="apply_settings" type="button" value="Apply Settings">
+      <input id="restart_midi" type="button" value="Restart MIDI">
+      <input id="restart_server" type="button" value="Restart Server">
+      <input id="quit" type="button" value="Quit">
     </div>
     <form id="clear" method="POST" action="#">
         <input type="submit" value="Clear Log">

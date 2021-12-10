@@ -52,17 +52,11 @@ def disconnect_midi():
     socketio.emit('my_response', {'data': 'Disonnected', 'count': 0})
     print('[INFO] client disconnected: {}'.format(request.sid))
 
-@socketio.on('*')
-def catch_all(event, data):
-    socketio.emit('my_response', {'data': f'{event} {data}', 'count': 0})
-    print(f'[CATCH_ALL] {event} {data}')
 
 @socketio.on('get_settings')
 def get_settings(data):
     load_settings(settingsFile)
     send_settings()
-    # socketio.emit('settings', {'midi_mode':midi_mode, 'availableInputs':availableInputs, 'availableOutputs':availableOutputs, \
-    #                 'activeInput':activeInput, 'activeOutput':activeOutput, 'settings':settings, 'keymap':keymap})
 
 @socketio.on('save_settings')
 def save_settings(data):
@@ -73,7 +67,34 @@ def send_settings():
     socketio.emit('settings', {'midi_mode':midi_mode, 'availableInputs':availableInputs, 'availableOutputs':availableOutputs, \
                     'activeInput':activeInput, 'activeOutput':activeOutput, 'settings':settings, 'keymap':keymap})
 
-################# forward midi_mapper to web interface ######################3
+################# forward main app to web interface #########################
+
+@socketio.on('midi_restarted')
+def midi_restarted():
+    client_msg('MIDI has been restarted')
+
+@socketio.on('server_restarted')
+def server_restarted():
+    client_msg('Server has been restarted')
+
+####################  forward web interface to main app #####################
+
+@socketio.on('restart_midi')
+def restart_midi():
+    socketio.emit('restart_midi')
+    client_msg('Sent Restart MIDI')
+
+@socketio.on('restart_server')
+def restart_server():
+    socketio.emit('restart_server')
+    client_msg('Sent Restart Server')
+
+@socketio.on('quit')
+def quit():
+    socketio.emit('quit')
+    client_msg('Sent Quit')
+
+################# forward midi_mapper to web interface ######################
 @socketio.on('client_msg')
 def client_msg(message):
     socketio.emit('my_response', {'data': message})
@@ -89,8 +110,6 @@ def setup(message):
     keymap = message['keymap']
     midi_mode = message['midi_mode']
     send_settings()
-    # socketio.emit('settings', {'midi_mode':midi_mode, 'availableInputs':availableInputs, 'availableOutputs':availableOutputs, \
-    #                 'activeInput':activeInput, 'activeOutput':activeOutput, 'settings':settings, 'keymap':keymap})
 
 @socketio.on('io_set')
 def io_set(message):
