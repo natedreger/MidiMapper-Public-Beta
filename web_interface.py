@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Help from https://github.com/alwaysai/video-streamer on  client-server setup
 

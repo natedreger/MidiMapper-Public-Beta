@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # https://github.com/SpotlightKid/python-rtmidi
 # https://python-osc.readthedocs.io
