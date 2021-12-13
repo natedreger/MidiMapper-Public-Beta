@@ -127,6 +127,7 @@ def set_mode(message):
     midi_mode = message
     send_settings()
     print(f"MIDI Mode changed to: {midi_mode}")
+    send_client_msg(f"MIDI Mode changed to: {midi_mode}")
     q.put(['dummy message', [0,0,0]])
 
 @sio.on('exact_match')
@@ -343,8 +344,10 @@ class MidiMessage:
                 self.message_type = 'modulation'
             else:
                 self.message_type = 'control'
+        elif self.channel < 0 or self.velocity == 0:
+            self.message_type = 'note_off'
         else:
-            self.message_type = 'note'
+            self.message_type = 'note_on'
 
 class MidiInput:
     def handle_midi_in(self, event, data):
@@ -398,7 +401,7 @@ def midi_main(settings_file):
                     msg = MidiMessage(q.get(1))
                     if msg:
                         filter = ('All' in filterInput) or (msg.indevice in filterInput)
-                        if msg.velocity > 0 and filter and msg.message_type == 'note':
+                        if msg.velocity > 0 and filter and msg.message_type == 'note_on':
                             sio.emit('midi_msg', {'data': f'{msg.indevice} : {msg.midi}'})
                             if activeOutput != 'None':
                                 # print(settings['match_device'] == 'True')
@@ -426,6 +429,8 @@ def midi_main(settings_file):
                                     print(f"No mapping for note {msg.note} on {msg.indevice} found")
                                     print(f"Sent {msg.note}")
                                     sio.emit('midi_sent', {'data': f"Channel: {msg.channel} Note: {msg.note}"})
+                                    # time.sleep(0.1)
+                                    # mw.send_note_off(msg.note)
                                 time.sleep(0.1)
                         elif (msg.velocity > 0) and (not filter) and (not 'None' in filterInput):
                             print(filterInput)
@@ -435,11 +440,14 @@ def midi_main(settings_file):
                 while midi_mode == 'thru':
                     msg = MidiMessage(q.get(1))
                     sio.emit('midi_msg', {'data': f'{msg.indevice} : {msg.midi}'})
-                    if msg.message_type == 'note':
+                    if msg.message_type == 'note_on':
                         mw = MidiOutWrapper(midiout, ch=msg.channel)
                         mw.send_note_on(msg.note, msg.velocity)
                         print(f"Sent {msg.note} on Channel: {msg.channel}")
-                        sio.emit('midi_sent', {'data': f"Channel: {msg.channel} Note: {msg.note}"})
+                        sio.emit('midi_sent', {'data': f"{msg.message_type} Channel: {msg.channel} Note: {msg.note}"})
+                    elif msg.message_type == 'note_off':
+                        mw.send_note_off(msg.note)
+                        sio.emit('midi_sent', {'data': f"{msg.message_type} Channel: {msg.channel} Note: {msg.note}"})
                     elif msg.message_type == 'sustain':
                         mw = MidiOutWrapper(midiout, ch=msg.channel)
                         mw.send_control_change(64, msg.velocity, ch=msg.channel)
