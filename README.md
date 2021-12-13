@@ -25,7 +25,7 @@ Future features to implement :
 - [ ] OSC to MIDI
 - [ ] Channel Routing
 - [ ] Device to Device mapping
-- [ ] Logs https://realpython.com/python-logging/#the-logging-module
+- [X] Logs 
 
 Built using :
 - python-rtmidi
