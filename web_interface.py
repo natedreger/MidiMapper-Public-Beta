@@ -4,9 +4,12 @@
 
 # web_interface.py
 
+import json
+
 from flask_socketio import SocketIO
 from flask import Flask, render_template, request
-import json
+
+from logger import *
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -189,6 +192,7 @@ def server_main(settings_file):
     load_settings(settings_file)
     print('Server Main')
     print(f'[INFO] Starting server at http://localhost:{socket_port}')
+    logging.info(f"{__name__} started")
     socketio.run(app=app, host='0.0.0.0', port=socket_port)
 
 if __name__ == "__main__":

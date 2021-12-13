@@ -21,8 +21,8 @@ from dotenv import load_dotenv
 from multiprocessing import Process
 
 from web_interface import server_main
-from midi_mapper import midi_main
-
+from midi_mapper import midi_main, end_MIDI
+from logger import *
 
 sys.path.insert(0, os.path.dirname(__file__))
 load_dotenv('.env')
@@ -31,8 +31,8 @@ SETTINGS_FILE=os.environ.get('SETTINGS_FILE')
 midi_processes = []
 server_processes = []
 
-sio2 = socketio.Client()
 
+sio2 = socketio.Client()
 @sio2.event
 def connect():
     print('[INFO] App Successfully connected to server.')
@@ -49,6 +49,7 @@ def restart_midi():
     midi_processes[next_midi].start()
     # sio2.emit('midi_restarted')
     print('MIDI Restarted')
+    logging.info('MIDI Restarted')
 
 @sio2.on('restart_server')
 def restart_server():
@@ -62,9 +63,12 @@ def restart_server():
     server_processes[next_server].start()
     restart_midi()
     print('Server Restarted')
+    logging.info('Server Restarted')
 
 @sio2.on('quit')
 def quit():
+    end_MIDI()
+    time.sleep(1.0)
     print('Exiting')
     terminateProcesses()
     time.sleep(1.0)
@@ -104,6 +108,8 @@ load_settings()
 midi_processes.append(Process(target=midi_main, args=(SETTINGS_FILE,)))
 server_processes.append(Process(target=server_main, args=(SETTINGS_FILE,)))
 
+logging.info(f"{__name__} started")
+
 try:
     for server_process in server_processes:
         server_process.start()
@@ -116,6 +122,7 @@ try:
             sio2.connect(f'http://{server_addr}:{server_port}')
         except socketio.exceptions.ConnectionError as err:
             print("ConnectionError: %s", err)
+            logging.error(f"{__name__} - {err}")
         else:
             print("Connected!")
             connected = True

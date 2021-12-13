@@ -22,6 +22,7 @@ from rtmidi.midiutil import open_midioutput, open_midiinput
 ### Local Modules
 from midioutwrapper import MidiOutWrapper
 from probe_ports import probe_ports, getAvailableIO
+from logger import *
 
 # log = logging.getLogger('midiout')
 # logging.basicConfig(level=logging.DEBUG)
@@ -46,7 +47,7 @@ activeOutput = ""
 outports = []
 midi_mode = 'thru'
 inports = getAvailableIO(MidiIn)
-# global_vars = ['m0','m1','m2']
+midiout, outport_name = open_midioutput(0)
 
 q = queue.Queue()
 
@@ -110,6 +111,8 @@ def select_io(message):
     send_settings()
     print(f"Input Filters changed to: {activeInput}")
     print(f"Output changed to: {activeOutput}")
+    logging.info(f"Input Filters changed to: {activeInput}")
+    logging.info(f"Output changed to: {activeOutput}")
 
 @sio.on('rescan_io')
 def rescan_io():
@@ -127,6 +130,7 @@ def set_mode(message):
     midi_mode = message
     send_settings()
     print(f"MIDI Mode changed to: {midi_mode}")
+    logging.info(f"MIDI Mode changed to: {midi_mode}")
     send_client_msg(f"MIDI Mode changed to: {midi_mode}")
     q.put(['dummy message', [0,0,0]])
 
@@ -322,6 +326,7 @@ def scan_io(type):
 
     except (EOFError):
         print('Something Went Wrong')
+        logging.error('Something Went Wrong While Scanning I/O')
         sio.emit('client_msg', 'Something Went Wrong with MIDI')
         end_MIDI()
         print("Exit.")
@@ -374,6 +379,7 @@ class MidiInput:
 
 def midi_main(settings_file):
     global settingsFile, midi_mode
+    logging.info(f"{ __name__} started")
     settingsFile = settings_file
     load_settings(settingsFile)
     scan_io('initial')
@@ -387,6 +393,7 @@ def midi_main(settings_file):
             sio.connect(f'http://{server_addr}:{socket_port}')
         except socketio.exceptions.ConnectionError as err:
             print("ConnectionError: %s", err)
+            logging.error(f"{ __name__} - {err}")
         else:
             print("Connected!")
             connected = True
@@ -463,8 +470,10 @@ def midi_main(settings_file):
 
         except:
             print('Something Went Wrong')
+            logging.error(f"{ __name__} - Something Went Wrong with MIDI ")
             sio.emit('client_msg', 'Something Went Wrong with MIDI')
     except:
         save_settings(settings_file)
         end_MIDI()
+        logging.info(f"{ __name__} - MIDI Ended ")
         print('Exiting')
