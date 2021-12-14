@@ -27,7 +27,7 @@ from logger import *
 # log = logging.getLogger('midiout')
 # logging.basicConfig(level=logging.DEBUG)
 
-# keyMapFile = 'keymap.json'
+keyMapFile = 'default.json'
 # settingsFile = 'settings.json'
 # Default out ports
 outport = 0
@@ -146,6 +146,11 @@ def update_settings():
     load_settings(settingsFile)
     send_settings()
 
+@sio.on('save_settings')
+def save_settings():
+    save_settings(settingsFile)
+    send_client_msg('MIDI Settings Saved')
+
 @sio.on('apply_settings')
 def apply_settings():
     load_settings(settingsFile)
@@ -238,13 +243,14 @@ def setInputFilter(new_inputs):
     for input in new_inputs:
         filterInput.append(input)
     activeInput = filterInput
-    print(filterInput)
 
 def load_settings(settings_file):
     global settings, defaultInput, defaultOutput, filterInput, ignoreInputs, \
             ignoreOutputs, keyMapFile, socket_port, midi_mode, match_device
     file = open(settings_file)
     settings = json.loads(file.read())
+    file.close()
+
     keyMapFile = settings['keymap']
     defaultInput = settings['default_input']
     defaultOutput = settings['default_output']
@@ -255,16 +261,16 @@ def load_settings(settings_file):
     match_device = settings['match_device']
     filterInput.clear()
     filterInput.append(defaultInput)
-    print(settings)
-    file.close()
 
 def save_settings(settings_file):
-    file = open(settings_file)
     settings['last_input'] = filterInput
-    settings['last_output'] = outport
+    settings['last_output'] = activeOutput
     settings['last_keymap'] = keyMapFile
-    print(settings)
+
+    file = open(settings_file,'w')
+    file.write(json.dumps(settings))
     file.close()
+    print('MIDI Settings Saved')
 
 def end_MIDI():
     for i in range (0, len(inports)):
@@ -277,6 +283,7 @@ def end_MIDI():
     midiout.close_port()
     gc.collect()
     print("MIDI Ports Closed")
+
 
 def scan_io(type):
     global midiout, outport_name, inports, filteredOutputList, filteredInputList, activeOutput, activeInput
@@ -391,7 +398,7 @@ def midi_main(settings_file):
     while not connected:
         try:
             sio.connect(f'http://{server_addr}:{socket_port}')
-        except socketio.exceptions.ConnectionError as err:
+        except Exception as err:
             print("ConnectionError: %s", err)
             logging.error(f"{ __name__} - {err}")
         else:
@@ -468,12 +475,12 @@ def midi_main(settings_file):
                         else:
                             print(msg.message_type)
 
-        except:
-            print('Something Went Wrong')
-            logging.error(f"{ __name__} - Something Went Wrong with MIDI ")
-            sio.emit('client_msg', 'Something Went Wrong with MIDI')
-    except:
+        except Exception as err:
+            print(f"{ __name__} - Something Went Wrong with MIDI {err}")
+            logging.error(f"{ __name__} - Something Went Wrong with MIDI {err}")
+            sio.emit('client_msg', f'Something Went Wrong with MIDI - {err}' )
+    except Exception as err:
         save_settings(settings_file)
         end_MIDI()
-        logging.info(f"{ __name__} - MIDI Ended ")
+        logging.info(f"{ __name__} - MIDI Ended - {err} ")
         print('Exiting')

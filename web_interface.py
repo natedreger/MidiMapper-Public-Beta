@@ -5,6 +5,7 @@
 # web_interface.py
 
 import json
+import time
 
 from flask_socketio import SocketIO
 from flask import Flask, render_template, request
@@ -63,7 +64,7 @@ def get_settings(data):
 
 @socketio.on('save_settings')
 def save_settings(data):
-    saveSettings(data, settingsFile)
+    saveServerSettings(data, settingsFile)
     socketio.emit('save_settings',)
 
 def send_settings():
@@ -84,18 +85,20 @@ def server_restarted():
 
 @socketio.on('restart_midi')
 def restart_midi():
-    socketio.emit('restart_midi')
     client_msg('Sent Restart MIDI')
+    socketio.emit('restart_midi')
 
 @socketio.on('restart_server')
 def restart_server():
-    socketio.emit('restart_server')
     client_msg('Sent Restart Server')
+    socketio.emit('restart_server')
 
 @socketio.on('quit')
 def quit():
+    client_msg('Quitting')
+    socketio.emit('save_settings')
+    time.sleep(1)
     socketio.emit('quit')
-    client_msg('Sent Quit')
 
 ################# forward midi_mapper to web interface ######################
 @socketio.on('client_msg')
@@ -180,12 +183,13 @@ def load_settings(settings_file):
     socket_port = settings['socket_port']
     file.close()
 
-def saveSettings(data, settings_file):
+def saveServerSettings(data, settings_file):
     file = open(settings_file)
     settings = json.loads(file.read())
     settings['socket_port'] = data['socket_port']
+    # file.write(json.dumps(settings))
     file.close()
-    socketio.emit('my_response', {'data': 'Settings Saved'})
+    socketio.emit('my_response', {'data': 'Server Settings Saved'})
     print('Settings Saved')
 
 def server_main(settings_file):

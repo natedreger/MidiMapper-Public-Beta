@@ -72,6 +72,7 @@ def quit():
     print('Exiting')
     terminateProcesses()
     time.sleep(1.0)
+    logging.info(f"{__name__} quit")
     os._exit(os.EX_OK)
 
 @sio2.on('reboot')
@@ -120,7 +121,7 @@ try:
     while not connected:
         try:
             sio2.connect(f'http://{server_addr}:{server_port}')
-        except socketio.exceptions.ConnectionError as err:
+        except Exception as err:
             print("ConnectionError: %s", err)
             logging.error(f"{__name__} - {err}")
         else:
