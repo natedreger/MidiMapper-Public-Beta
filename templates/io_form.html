@@ -1,4 +1,5 @@
 <!-- io_form.html -->
+<script src="static/js/functions.js"></script>
 <script>
   $(document).ready(function() {
       // Connect to the Socket.IO server.
@@ -24,35 +25,14 @@
           $('#log').prepend('<br>' + $('<div/>').text('Active Input: ' + activeInput).html());
           $('#log').prepend('<br>' + $('<div/>').text('Active Output: ' + activeOutput).html());
 
-          var inputOptions = ['None', 'All', 'Web Interface']
-          $.each(availableInputs, function(i) {
-            inputOptions.push(availableInputs[i])
-          });
-
-          var outputOptions = ['None', 'All']
-          $.each(availableOutputs, function(o) {
-            outputOptions.push(availableOutputs[o])
-          });
-
 
           // build the input list
-          var $el = $("#inputs");
-          $el.empty(); // remove old options
-          $.each(inputOptions, function(i) {
-            $el.append($("<option></option>")
-               .attr("value", inputOptions[i]).text(inputOptions[i]));
-          $('#inputs option[value="'+activeInput+'"]').attr('selected','selected');
-          });
+          inputOptions = getIOoptions('inputs', availableInputs)
+          build_options($("#inputs"), inputOptions, activeInput)
 
           // build the output list
-          var $el = $("#outputs");
-          $el.empty(); // remove old options
-          $.each(outputOptions, function(i) {
-            $el.append($("<option></option>")
-               .attr("value", outputOptions[i]).text(outputOptions[i]));
-          $('#outputs option[value="'+activeOutput+'"]').attr('selected','selected');
-          });
-
+          outputOptions = getIOoptions('outputs', availableOutputs)
+          build_options($("#outputs"), outputOptions, activeOutput)
 
           $('#log').prepend('<br>' + $('<div/>').text('MIDI Mode: ' + midi_mode).html());
           if (cb)

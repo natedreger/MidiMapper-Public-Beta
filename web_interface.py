@@ -68,7 +68,7 @@ def save_settings(data):
     socketio.emit('save_settings',)
 
 def send_settings():
-    socketio.emit('settings', {'midi_mode':midi_mode, 'availableInputs':availableInputs, 'availableOutputs':availableOutputs, \
+    socketio.emit('settings', {'match_device':match_device,'midi_mode':midi_mode, 'availableInputs':availableInputs, 'availableOutputs':availableOutputs, \
                     'activeInput':activeInput, 'activeOutput':activeOutput, 'settings':settings, 'keymap':keymap})
 
 ################# forward main app to web interface #########################
@@ -107,7 +107,7 @@ def client_msg(message):
 
 @socketio.on('setup')
 def setup(message):
-    global midi_mode, availableInputs, activeOutput, availableOutputs, activeInput, settings, keymap
+    global midi_mode, availableInputs, activeOutput, availableOutputs, activeInput, settings, keymap, match_device
     availableInputs = message['inputs']
     activeOutput = message['activeOutput']
     availableOutputs = message['outputs']
@@ -115,6 +115,7 @@ def setup(message):
     settings = message['settings']
     keymap = message['keymap']
     midi_mode = message['midi_mode']
+    match_device = message['match_device']
     send_settings()
 
 @socketio.on('io_set')

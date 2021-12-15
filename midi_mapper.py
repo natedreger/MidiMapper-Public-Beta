@@ -169,7 +169,7 @@ def send_client_msg(message):
     sio.emit('client_msg', message)
 
 def send_settings():
-    sio.emit('setup', {'midi_mode':midi_mode, 'outputs':filteredOutputList, 'inputs':filteredInputList, \
+    sio.emit('setup', {'match_device':match_device, 'midi_mode':midi_mode, 'outputs':filteredOutputList, 'inputs':filteredInputList, \
             'activeOutput':activeOutput, 'activeInput':activeInput,\
             'settings':settings, 'keymap':mappedkeys})
 
@@ -357,8 +357,10 @@ class MidiMessage:
                 self.message_type = 'modulation'
             else:
                 self.message_type = 'control'
-        elif self.channel < 0 or self.velocity == 0:
+        elif self.channel < 0:
             self.channel = self.channel+16
+            self.message_type = 'note_off'
+        elif self.velocity == 0:
             self.message_type = 'note_off'
         else:
             self.message_type = 'note_on'
@@ -412,12 +414,11 @@ def midi_main(settings_file):
         try:
             while True:
                 timer = time.time()
-                # midi_mode = 'thru'
-                while midi_mode == 'mapped':
+                while midi_mode == 'Mapped':
                     msg = MidiMessage(q.get(1))
                     if msg:
                         filter = ('All' in filterInput) or (msg.indevice in filterInput)
-                        if msg.velocity > 0 and filter and msg.message_type == 'note_on':
+                        if msg.velocity > 0 and filter and msg.message_type == 'note_on' and msg.channel > 0:
                             sio.emit('midi_msg', {'data': f'{msg.indevice} : {msg.midi}'})
                             if activeOutput != 'None':
                                 # print(settings['match_device'] == 'True')
@@ -454,10 +455,10 @@ def midi_main(settings_file):
                             send_ignore(msg.indevice)
                 time.sleep(0.01)
 
-                while midi_mode == 'thru':
+                while midi_mode == 'Thru':
                     msg = MidiMessage(q.get(1))
                     filter = ('All' in filterInput) or (msg.indevice in filterInput)
-                    if filter:
+                    if filter and msg.channel > 0:
                         sio.emit('midi_msg', {'data': f'{msg.indevice} : {msg.midi}'})
                         if msg.message_type == 'note_on':
                             mw = MidiOutWrapper(midiout, ch=msg.channel)
@@ -478,7 +479,8 @@ def midi_main(settings_file):
         except Exception as err:
             print(f"{ __name__} - Something Went Wrong with MIDI {err}")
             logging.error(f"{ __name__} - Something Went Wrong with MIDI {err}")
-            sio.emit('client_msg', f'Something Went Wrong with MIDI - {err}' )
+            sio.emit('client_msg', f'Something Went Wrong with MIDI - {err} - Restarting MIDI' )
+            sio.emit('restart_midi')
     except Exception as err:
         save_settings(settings_file)
         end_MIDI()
