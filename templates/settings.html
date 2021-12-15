@@ -42,11 +42,6 @@
                 settings = msg.settings
                 // keymap = msg.keymap
 
-                // select the correct mode
-                $('#log').prepend('<br>' + $('<div/>').text('MIDI Mode: ' + midi_mode).html());
-
-
-
                 build_options($("#midi_mode"), ModeOptions, active_midi_mode)
                 build_options($("#default_midi_mode"), ModeOptions, settings['midi_mode'])
 
