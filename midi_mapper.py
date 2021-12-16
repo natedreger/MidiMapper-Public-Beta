@@ -59,6 +59,9 @@ socket_port = '5005' # default, can be overridden in settings
 @sio.event
 def connect():
     send_settings()
+    for message in message_buffer:
+        send_client_msg(message)
+        print(message)
     print('[INFO] MIDI Successfully connected to server.')
 
 @sio.event
@@ -132,6 +135,9 @@ def set_mode(message):
     print(f"MIDI Mode changed to: {midi_mode}")
     logging.info(f"MIDI Mode changed to: {midi_mode}")
     send_client_msg(f"MIDI Mode changed to: {midi_mode}")
+    if midi_mode == 'Mapped' and not map:
+        send_client_msg(f"No Keymap Loaded")
+        set_mode('Thru')
     q.put(['dummy message', [0,0,0]])
 
 @sio.on('exact_match')
@@ -146,9 +152,13 @@ def update_settings():
     load_settings(settingsFile)
     send_settings()
 
+@sio.on('quit')
+def quit():
+    save_settings(settingsFile, settings)
+
 @sio.on('save_settings')
-def save_settings():
-    save_settings(settingsFile)
+def save_settings(settings):
+    save_settings(settingsFile, settings)
     send_client_msg('MIDI Settings Saved')
 
 @sio.on('apply_settings')
@@ -176,14 +186,15 @@ def send_settings():
 
 ############### main functions #####################
 def searchKeyMap(device, note, exact):
-    print(f'searching keymap for note {note} on {device}')
-    for key in mappedkeys:
-        if exact:
-            device = device
-        else:
-            device = key['input_device']
-        if (str(key['note']) == str(note)) and (key['input_device'] == device):
-            return key
+    if map:
+        print(f'searching keymap for note {note} on {device}')
+        for key in mappedkeys:
+            if exact:
+                device = device
+            else:
+                device = key['input_device']
+            if (str(key['note']) == str(note)) and (key['input_device'] == device):
+                return key
 
 def searchIO(type, device):
     global message_buffer, activeInput, activeOutput
@@ -215,9 +226,15 @@ def searchIO(type, device):
     return portnum
 
 def loadKeyMap():
-    mapfile = open(f'./keymaps/{keyMapFile}')
-    map = json.loads(mapfile.read())
-    mapfile.close()
+    global map, message_buffer
+    try:
+        mapfile = open(f'./keymaps/{keyMapFile}')
+        map = json.loads(mapfile.read())
+        mapfile.close()
+    except Exception as err:
+        print(f'Error loading keymap - {err}')
+        message_buffer.append(f'Error loading keymap - {err}')
+        map = False
     return map
 
 def getMappedKeys():
@@ -262,7 +279,8 @@ def load_settings(settings_file):
     filterInput.clear()
     filterInput.append(defaultInput)
 
-def save_settings(settings_file):
+def save_settings(settings_file, new_settings):
+    settings = new_settings
     settings['last_input'] = filterInput
     settings['last_output'] = activeOutput
     settings['last_keymap'] = keyMapFile
@@ -482,7 +500,7 @@ def midi_main(settings_file):
             sio.emit('client_msg', f'Something Went Wrong with MIDI - {err} - Restarting MIDI' )
             sio.emit('restart_midi')
     except Exception as err:
-        save_settings(settings_file)
+        save_settings(settings_file, settings)
         end_MIDI()
         logging.info(f"{ __name__} - MIDI Ended - {err} ")
         print('Exiting')

@@ -6,11 +6,13 @@
 
 import json
 import time
-
 from flask_socketio import SocketIO
 from flask import Flask, render_template, request
 
 from logger import *
+
+cli = sys.modules['flask.cli']
+cli.show_server_banner = lambda *x: None
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -65,7 +67,7 @@ def get_settings(data):
 @socketio.on('save_settings')
 def save_settings(data):
     saveServerSettings(data, settingsFile)
-    socketio.emit('save_settings',)
+    socketio.emit('save_settings',data)
 
 def send_settings():
     socketio.emit('settings', {'match_device':match_device,'midi_mode':midi_mode, 'availableInputs':availableInputs, 'availableOutputs':availableOutputs, \
@@ -96,7 +98,6 @@ def restart_server():
 @socketio.on('quit')
 def quit():
     client_msg('Quitting')
-    socketio.emit('save_settings')
     time.sleep(1)
     socketio.emit('quit')
 

@@ -9,6 +9,36 @@
     <script src="static/js/functions.js"></script>
 
     <script type="text/javascript" charset="utf-8">
+
+        function buildSettingsEditor() {
+          build_options($("#midi_mode"), ModeOptions, active_midi_mode)
+          build_options($("#default_midi_mode"), ModeOptions, settings['midi_mode'])
+
+          inputOptions = getIOoptions('inputs', availableInputs)
+          build_options($("#default_input"), inputOptions, settings['default_input'])
+
+          outputOptions = getIOoptions('outputs', availableOutputs)
+          build_options($("#default_output"), outputOptions, settings['default_output'])
+
+          $('#exact_match').removeAttr('checked');
+          $('#default_exact_match').removeAttr('checked');
+          if (match_device == 'on') {
+            $('#exact_match').attr('checked', 'checked');
+          }
+
+          if (settings['match_device'] == 'on') {
+            $('#default_exact_match').attr('checked', 'checked');
+          };
+
+          $('#default_keymap').val(settings['keymap'])
+          $('#hide_inputs').val(settings['hide_inputs'])
+          $('#hide_outputs').val(settings['hide_outputs'])
+          $('#socket_port').val(settings['socket_port'])
+
+
+
+        }
+
         $(document).ready(function() {
             // Connect to the Socket.IO server.
             // The connection URL has the following format, relative to the current page:
@@ -40,26 +70,9 @@
                 active_midi_mode = msg.midi_mode
                 match_device = msg.match_device
                 settings = msg.settings
-                // keymap = msg.keymap
+                keymap = msg.keymap
 
-                build_options($("#midi_mode"), ModeOptions, active_midi_mode)
-                build_options($("#default_midi_mode"), ModeOptions, settings['midi_mode'])
-
-                inputOptions = getIOoptions('inputs', availableInputs)
-                build_options($("#default_input"), inputOptions, settings['default_input'])
-
-                outputOptions = getIOoptions('outputs', availableOutputs)
-                build_options($("#default_output"), outputOptions, settings['default_output'])
-
-                $('#exact_match').removeAttr('checked');
-                $('#default_exact_match').removeAttr('checked');
-                if (match_device) {
-                  $('#exact_match').attr('checked', 'checked');
-                }
-
-                if (settings['match_device'] == 'True') {
-                  $('#default_exact_match').attr('checked', 'checked');
-                };
+                buildSettingsEditor()
 
                 $("#log").html("");
                 $('#log').append('<br>' + $('<div/>').text('Default Settings Loaded:').html());
@@ -85,6 +98,18 @@
               });
 
             $("#save_settings").click(function(event) {
+                socket.emit('save_settings', settings);
+                return false;
+              });
+
+            $("#save_form_settings").click(function(event) {
+                form = document.getElementById('settings_form')
+                $.each(form.elements, function(key, value) {
+                  console.log(value.name + ' ' + value.value)
+                  // if is checkbox then do Something
+                  settings[value.name] = value.value
+                })
+                // settings['default_input'] = form.elements['default_input'].value
                 socket.emit('save_settings', settings);
                 return false;
               });
@@ -143,36 +168,36 @@
     <div style="padding-top:20px; padding-bottom:20px">
       <form id="settings_form" method="POST" action="#">
         <label for="default_midi_mode">Default MIDI Mode</label>
-        <select id="default_midi_mode">
+        <select id="default_midi_mode" name="midi_mode">
           <!-- jquery creates -->
         </select>
         <br>
         <label for="default_input">Default Input</label>
-        <select name="default_inputs" id="default_input" label="Default Input">
-          <!-- jquery fills in -->
+        <select name="default_input" id="default_input" label="Default Input">
+          <!-- jquery creates -->
         </select>
         <br>
         <label for="default_output">Default Output</label>
         <select name="default_output" id="default_output" label="Default Output">
-          <!-- jquery fills in -->
+          <!-- jquery creates -->
         </select>
         <br>
         <label for="default_exact_match">Match Input Device</label>
-        <input id="default_exact_match" type="checkbox">
+        <input id="default_exact_match" name="match_device" type="checkbox">
         <br>
         <label for="default_keymap">Default Keymap</label>
-        <input type="text" id="default_keymap">
+        <input type="text" id="default_keymap" name="keymap">
         <br>
         <label for="hide_inputs">Hidden Inputs</label>
-        <input type="text" id="hide_inputs">
+        <input type="text" id="hide_inputs" name="hide_inputs">
         <br>
         <label for="hide_outputs">Hidden Outputs</label>
-        <input type="text" id="hide_outputs">
+        <input type="text" id="hide_outputs" name="hide_outputs">
         <br>
-        <label for="port_num">Port Number</label>
-        <input type="text" id="port_num">
+        <label for="socket_port">Socket Port</label>
+        <input type="number" id="socket_port" name="socket_port">
         <br>
-        <input id="settings_form_save" type="submit" value="Save">
+        <input id="save_form_settings" type="submit" value="Save" name="save">
       </form>
     </div>
     <form id="clear" method="POST" action="#">
