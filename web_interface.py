@@ -6,6 +6,7 @@
 
 import json
 import time
+import os
 from flask_socketio import SocketIO
 from flask import Flask, render_template, request
 import sys
@@ -196,6 +197,7 @@ def saveServerSettings(data, settings_file):
     print('Settings Saved')
 
 def server_main(settings_file):
+    logging.debug(f'web_interface.py running as PID: {os.getpid()}')
     load_settings(settings_file)
     print('Server Main')
     print(f'[INFO] Starting server at http://localhost:{socket_port}')

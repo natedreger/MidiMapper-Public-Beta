@@ -1,0 +1,67 @@
+#! /bin/bash
+
+sudo passwd root
+su root
+usermod -l midi pi
+usermod -m -d /home/midi midi
+passwd
+
+sudo apt-get update
+sudo apt-get install -y ufw
+sudo apt-get install -y git
+sudo apt-get install -y python3-venv
+sudo apt-get install -y python3-dev
+sudo apt-get install -y libasound2-dev
+
+sudo ufw allow ssh
+sudo ufw allow 80/tcp
+sudo ufw allow 80/udp
+sudo ufw allow 5000:10000/tcp
+sudo ufw allow 5000:10000/udp
+sudo ufw enable
+
+# forward port 80 to 5005
+# add to /etc/ufw/before.rules, before '*filter' section
+*nat
+:PREROUTING ACCEPT [0:0]
+-A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 5005
+COMMIT
+
+
+
+git clone https://github.com/natedreger/MidiMapper
+cd /home/midi/MidiMapper
+python3 -m venv venv
+source venv/bin/activate
+
+bash install-reqs.sh
+
+
+nano /etc/systemd/system/midimapper.service
+
+  [Unit]
+  Description=MidiMapper
+  After=multi-user.target
+
+  [Service]
+  ExecStart=/home/midi/MidiMapper/venv/bin/python3 /home/midi/MidiMapper/app.py
+
+  # Disable Python's buffering of STDOUT and STDERR, so that output from the
+  # service shows up immediately in systemd's logs
+  Environment=PYTHONUNBUFFERED=1
+
+  # Automatically restart the service if it crashes
+  Restart=on-failure
+
+  # Our service will notify systemd once it is up and running
+  Type=notify
+
+  # Use a dedicated user to run our service
+  User=midi
+
+  [Install]
+  WantedBy=multi-user.target
+
+sudo systemctl enable --now midimapper.service
+systemctl status midimaper.service
+journalctl -b -e | grep 'midimapper'

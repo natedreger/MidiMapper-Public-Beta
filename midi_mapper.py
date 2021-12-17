@@ -13,6 +13,7 @@ import json
 import queue
 import socketio
 import gc
+import os
 
 from pythonosc import udp_client
 
@@ -405,6 +406,7 @@ class MidiInput:
 
 
 def midi_main(settings_file):
+    logging.debug(f'midi_mapper.py running as PID: {os.getpid()}')
     global settingsFile, midi_mode
     logging.info(f"{ __name__} started")
     settingsFile = settings_file

@@ -27,6 +27,7 @@ from logger import *
 sys.path.insert(0, os.path.dirname(__file__))
 load_dotenv('.env')
 SETTINGS_FILE=os.environ.get('SETTINGS_FILE')
+logging.debug(f'app.py running as PID: {os.getpid()}')
 
 midi_processes = []
 server_processes = []
