@@ -9,6 +9,4 @@
 /data
 *.log
 logfile.log
-client_test.py
-socketio_example_app.py
-nohup.out
+/testing
