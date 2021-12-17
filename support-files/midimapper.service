@@ -1,0 +1,26 @@
+# /etc/systemd/system/midimapper.service
+
+[Unit]
+Description=MidiMapper
+After=multi-user.target
+
+[Service]
+WorkingDirectory=/home/midi/MidiMapper
+ExecStart=/home/midi/MidiMapper/venv/bin/python3 /home/midi/MidiMapper/app.py
+
+# Disable Python's buffering of STDOUT and STDERR, so that output from the
+# service shows up immediately in systemd's logs
+Environment=PYTHONUNBUFFERED=1
+
+# Automatically restart the service if it crashes
+Restart=on-failure
+
+# Our service will notify systemd once it is up and running
+#Type=notify
+
+# Use a dedicated user to run our service
+User=midi
+Group=midi
+
+[Install]
+WantedBy=multi-user.target

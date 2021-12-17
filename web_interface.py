@@ -12,7 +12,7 @@ from flask import Flask, render_template, request
 import sys
 
 from logger import *
-from functions import owner
+from global_functions import owner
 
 cli = sys.modules['flask.cli']
 cli.show_server_banner = lambda *x: None

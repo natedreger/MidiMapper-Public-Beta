@@ -23,7 +23,7 @@ from multiprocessing import Process
 from web_interface import server_main
 from midi_mapper import midi_main, end_MIDI
 from logger import *
-from functions import owner
+from global_functions import owner
 
 sys.path.insert(0, os.path.dirname(__file__))
 load_dotenv('.env')
