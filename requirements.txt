@@ -1,5 +1,5 @@
 # run install-req.sh
-# python packages required NOTE rtmidi required but installed differntly
+# python packages required NOTE rtmidi required but installed differently
 
 python-socketio==5.5.0
 Flask==2.0.2

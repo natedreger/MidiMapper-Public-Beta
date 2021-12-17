@@ -14,7 +14,7 @@ MidiMapper also contains a builtin web interface for monitoring and setup.
 
 Still To Do :
 - [ ] Edit keymap via web interface
-- [ ] Edit settings via web interface
+- [x] Edit settings via web interface
 - [x] Change midi mode via web interface
 - [x] Match mapping device control
 - [x] remove lag from mode change
@@ -25,11 +25,15 @@ Future features to implement :
 - [ ] OSC to MIDI
 - [ ] Channel Routing
 - [ ] Device to Device mapping
-- [X] Logs 
+- [X] Logs
 
 Built using :
 - python-rtmidi
-- Flask-SocketIO
-- Flask
-- python-osc
-- python-socketio[client]
+- python-socketio==5.5.0
+- Flask==2.0.2
+- python-osc==1.8.0
+- Flask-SocketIO==5.1.1
+- python-dotenv==0.19.2
+- requests==2.22.0
+- simple-websocket==0.5.0
+- websocket-client==1.2.3
