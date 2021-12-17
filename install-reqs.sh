@@ -2,6 +2,7 @@
 # Installs al required modules
 
 ############### Python RTMidi
+# may require apt-get install libasound2-dev
 pip install Cython
 
 git clone https://github.com/SpotlightKid/python-rtmidi.git
