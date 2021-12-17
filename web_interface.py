@@ -58,7 +58,7 @@ def connect_midi():
 
 @socketio.on('disconnect')
 def disconnect_midi():
-    socketio.emit('my_response', {'data': 'Disonnected', 'count': 0})
+    socketio.emit('my_response', {'data': 'Disconnected', 'count': 0})
     print('[INFO] client disconnected: {}'.format(request.sid))
 
 

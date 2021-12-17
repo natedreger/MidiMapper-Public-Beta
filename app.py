@@ -6,8 +6,9 @@
 # Dependencies :
 # web_interface.py
 # midi_mapper.py
-# prope_ports.py
+# probe_ports.py
 # midioutwrapper.py
+# global_functions.py
 # settings.json
 # keymap.json
 
