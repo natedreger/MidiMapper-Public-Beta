@@ -24,6 +24,7 @@ from rtmidi.midiutil import open_midioutput, open_midiinput
 from midioutwrapper import MidiOutWrapper
 from probe_ports import probe_ports, getAvailableIO
 from logger import *
+from functions import owner
 
 # log = logging.getLogger('midiout')
 # logging.basicConfig(level=logging.DEBUG)
@@ -406,7 +407,7 @@ class MidiInput:
 
 
 def midi_main(settings_file):
-    logging.debug(f'midi_mapper.py running as PID: {os.getpid()}')
+    logging.debug(f'midi_mapper.py running as PID: {os.getpid()} as User: {owner(os.getpid())}')
     global settingsFile, midi_mode
     logging.info(f"{ __name__} started")
     settingsFile = settings_file

@@ -23,11 +23,13 @@ from multiprocessing import Process
 from web_interface import server_main
 from midi_mapper import midi_main, end_MIDI
 from logger import *
+from functions import owner
 
 sys.path.insert(0, os.path.dirname(__file__))
 load_dotenv('.env')
 SETTINGS_FILE=os.environ.get('SETTINGS_FILE')
-logging.debug(f'app.py running as PID: {os.getpid()}')
+
+logging.debug(f'app.py running as PID: {os.getpid()} as User: {owner(os.getpid())}')
 
 midi_processes = []
 server_processes = []

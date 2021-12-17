@@ -12,6 +12,7 @@ from flask import Flask, render_template, request
 import sys
 
 from logger import *
+from functions import owner
 
 cli = sys.modules['flask.cli']
 cli.show_server_banner = lambda *x: None
@@ -197,7 +198,7 @@ def saveServerSettings(data, settings_file):
     print('Settings Saved')
 
 def server_main(settings_file):
-    logging.debug(f'web_interface.py running as PID: {os.getpid()}')
+    logging.debug(f'web_interface.py running as PID: {os.getpid()} as User: {owner(os.getpid())}')
     load_settings(settings_file)
     print('Server Main')
     print(f'[INFO] Starting server at http://localhost:{socket_port}')
