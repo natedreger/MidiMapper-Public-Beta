@@ -1,10 +1,6 @@
 #! /bin/bash
 # Installs al required modules
 
-deactivate
-python3 -m venv venv
-source venv/bin/activate
-
 ############### Python RTMidi
 # may require apt-get install libasound2-dev
 pip install Cython
