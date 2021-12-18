@@ -8,27 +8,23 @@
 # midi_mapper.py
 # probe_ports.py
 # midioutwrapper.py
-# global_functions.py
+# globals.py
 # settings.json
 # keymap.json
 
 import gc
 import os
-import sys
 import json
 import time
 import socketio
-from dotenv import load_dotenv
 from multiprocessing import Process
 
 from web_interface import server_main
 from midi_mapper import midi_main, end_MIDI
 from logger import *
-from global_functions import owner
+from globals import owner, VERSION, SETTINGS_FILE
 
-sys.path.insert(0, os.path.dirname(__file__))
-load_dotenv('.env')
-SETTINGS_FILE=os.environ.get('SETTINGS_FILE')
+
 
 logging.debug(f'app.py running as PID: {os.getpid()} as User: {owner(os.getpid())}')
 

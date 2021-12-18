@@ -24,7 +24,7 @@ from rtmidi.midiutil import open_midioutput, open_midiinput
 from midioutwrapper import MidiOutWrapper
 from probe_ports import probe_ports, getAvailableIO
 from logger import *
-from global_functions import owner
+from globals import owner
 
 # log = logging.getLogger('midiout')
 # logging.basicConfig(level=logging.DEBUG)

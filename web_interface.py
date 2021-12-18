@@ -12,7 +12,7 @@ from flask import Flask, render_template, request
 import sys
 
 from logger import *
-from global_functions import owner
+from globals import owner, VERSION
 
 cli = sys.modules['flask.cli']
 cli.show_server_banner = lambda *x: None
@@ -25,13 +25,13 @@ socketio = SocketIO(app)
 def index():
     return render_template('index.html', async_mode=socketio.async_mode, \
                             availableInputs=availableInputs, availableOutputs=availableOutputs,\
-                            activeOutput=activeOutput, activeInput=activeInput)
+                            activeOutput=activeOutput, activeInput=activeInput, version=VERSION)
 
 @app.route('/settings')
 def settings():
     return render_template('settings.html', async_mode=socketio.async_mode, \
                             availableInputs=availableInputs, availableOutputs=availableOutputs,\
-                            activeOutput=activeOutput, activeInput=activeInput)
+                            activeOutput=activeOutput, activeInput=activeInput, version=VERSION)
 
 @app.route('/keymap')
 def keymap():
