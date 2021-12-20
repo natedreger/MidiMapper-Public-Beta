@@ -15,7 +15,7 @@ On a more advanced level MidiMapper allows keymaps to be created allowing note o
 MidiMapper also contains a builtin web interface for monitoring and setup.
 
 Still To Do :
-- [ ] Edit keymap via web interface
+- [x] Edit keymap via web interface
 - [x] Edit settings via web interface
 - [x] Change midi mode via web interface
 - [x] Match mapping device control
