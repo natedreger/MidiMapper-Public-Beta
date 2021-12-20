@@ -166,9 +166,10 @@ def save_settings(settings):
 
 @sio.on('apply_settings')
 def apply_settings():
-    load_settings(settingsFile)
-    scan_io('rescan')
-    send_settings()
+    sio.emit('restart_midi')
+    # load_settings(settingsFile)
+    # scan_io('rescan')
+    # send_settings()
 
 @sio.on('restart_midi')
 def restart_midi():

@@ -29,6 +29,9 @@ Future features to implement :
 - [ ] Device to Device mapping
 - [X] Logs
 
+Known Issues to fix :
+- [ ] rescan midi I/O results in corrupt data upon next note (for now midi will be restarted)
+
 Built using :
 - python-rtmidi
 - python-socketio==5.5.0
