@@ -121,8 +121,9 @@ def select_io(message):
 
 @sio.on('rescan_io')
 def rescan_io():
-    scan_io('rescan')
-    send_settings()
+    sio.emit('restart_midi')
+    # scan_io('rescan')
+    # send_settings()
 
 @sio.on('reload_keymap')
 def reload_keymap():
@@ -199,6 +200,7 @@ def searchKeyMap(device, note, exact):
                 return key
 
 def searchIO(type, device):
+    ### no problems
     global message_buffer, activeInput, activeOutput
     if type == 'input':
         print(f'Searching for Inputs for {device}')
@@ -308,6 +310,7 @@ def end_MIDI():
 def scan_io(type):
     global midiout, outport_name, inports, filteredOutputList, filteredInputList, activeOutput, activeInput
     if type == 'rescan':
+        print("!!!!!!!!!! RESCANING MIDI !!!!!!!!!!!!!!!!!")
         end_MIDI()
 
     temp = []
@@ -351,11 +354,12 @@ def scan_io(type):
                 activeOutput = 'None'
             searchIO('input', defaultInput)
 
-    except (EOFError):
+    except Exception as err:
         print('Something Went Wrong')
-        logging.error('Something Went Wrong While Scanning I/O')
-        sio.emit('client_msg', 'Something Went Wrong with MIDI')
-        end_MIDI()
+        logging.error(f'Something Went Wrong While Scanning I/O: {err}')
+        sio.emit('client_msg', f'Something Went Wrong with MIDI: {err}')
+        sio.emit('restart_midi')
+        # end_MIDI()
         print("Exit.")
 
 class MidiMessage:

@@ -23,21 +23,19 @@ socketio = SocketIO(app)
 
 @app.route('/')
 def index():
-    return render_template('index.html', async_mode=socketio.async_mode, \
-                            availableInputs=availableInputs, availableOutputs=availableOutputs,\
-                            activeOutput=activeOutput, activeInput=activeInput, version=VERSION)
+    return render_template('index.html', async_mode=socketio.async_mode, version=VERSION)
+
+@app.route('/log')
+def log():
+    return render_template('log.html', async_mode=socketio.async_mode, version=VERSION, log=loadLog())
 
 @app.route('/settings')
 def settings():
-    return render_template('settings.html', async_mode=socketio.async_mode, \
-                            availableInputs=availableInputs, availableOutputs=availableOutputs,\
-                            activeOutput=activeOutput, activeInput=activeInput, version=VERSION)
+    return render_template('settings.html', async_mode=socketio.async_mode, version=VERSION)
 
 @app.route('/keymap')
 def keymap():
-    return render_template('keymap.html', async_mode=socketio.async_mode, \
-                            availableInputs=availableInputs, availableOutputs=availableOutputs,\
-                            activeOutput=activeOutput, activeInput=activeInput)
+    return render_template('keymap.html', async_mode=socketio.async_mode, version=VERSION)
 
 
 ################## APP SOCKETS ################################

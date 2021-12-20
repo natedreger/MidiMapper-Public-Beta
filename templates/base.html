@@ -15,6 +15,7 @@
      <a class="p-2 text-dark" href="{{url_for('index')}}">Monitor</a>
      <a class="p-2 text-dark" href="{{url_for('keymap')}}">KeyMap</a>
      <a class="p-2 text-dark" href="{{url_for('settings')}}">Settings</a>
+     <a class="p-2 text-dark" href="{{url_for('log')}}">Logs</a>
    </nav>
  </header>
 
@@ -22,11 +23,10 @@
 {% endblock main %}
 <!-- resume base.html -->
 {% block footer %}
-
-{% endblock footer%}
 <div id="version">
   Software version: {{ version }}
 </div>
+{% endblock footer%}
 <meta id="copyright" value="Copyright 2021 Nate Dreger unless otherwise attributed">
 </html>
 <!-- end base.html -->
