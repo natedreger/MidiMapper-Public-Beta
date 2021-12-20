@@ -18,6 +18,14 @@
             var keymap = []
             var mode = "view"
             var keyExists = false
+            function hide_fields() {
+              $("#channel").css("display", "none");
+              $("#new_note").css("display", "none");
+              $("#pc").css("display", "none");
+              $("#osc").css("display", "none");
+              $("#osc_host").css("display", "none");
+              $("#osc_port").css("display", "none");
+            }
             // Event handler for new connections.
             // The callback function is invoked when a connection with the
             // server is established.
@@ -139,12 +147,7 @@
 
             $("#edit_keymap").click(function(event) {
                 mode = "edit"
-                $("#channel").css("display", "none");
-                $("#new_note").css("display", "none");
-                $("#pc").css("display", "none");
-                $("#osc").css("display", "none");
-                $("#osc_host").css("display", "none");
-                $("#osc_port").css("display", "none");
+                hide_fields()
                 $("#keymap_editor").css("display", "block");
                 return false;
               });
@@ -194,6 +197,7 @@
               });
 
             $("#map_type").change(function(event) {
+                hide_fields()
                 var selValue = $(this).val();
                 switch (selValue) {
                   case 'NOTE_ON':
