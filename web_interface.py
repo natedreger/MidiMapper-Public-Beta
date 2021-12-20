@@ -13,8 +13,7 @@ import sys
 
 from logger import *
 from globals import owner, VERSION
-from keymap import add_keymap
-
+from keymap import add_keymap, searchKeyMap, modify_keymap, del_keymap
 cli = sys.modules['flask.cli']
 cli.show_server_banner = lambda *x: None
 
@@ -110,6 +109,17 @@ def quit():
 def new_mapping(keymap, map):
     add_keymap(keymap, map)
 
+@socketio.on('modify_mapping')
+def modify_mapping(keymap, map):
+    modify_keymap(keymap, map)
+
+@socketio.on('delete_mapping')
+def delete_mapping(keymap, note, device):
+    del_keymap(keymap, note, device)
+
+@socketio.on('search_keymap')
+def search_keymap(keymap, device, note):
+    socketio.emit('search_keymap_return', searchKeyMap(keymap, device, note, False))
 
 ################# forward midi_mapper to web interface ######################
 @socketio.on('client_msg')

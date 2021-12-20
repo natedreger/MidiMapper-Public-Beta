@@ -25,7 +25,7 @@ from midioutwrapper import MidiOutWrapper
 from probe_ports import probe_ports, getAvailableIO
 from logger import *
 from globals import owner
-from keymap import getMappedKeys
+from keymap import getMappedKeys, searchKeyMap
 
 # log = logging.getLogger('midiout')
 # logging.basicConfig(level=logging.DEBUG)
@@ -191,19 +191,6 @@ def send_settings():
             'activeOutput':activeOutput, 'activeInput':activeInput,\
             'settings':settings, 'keymap':mappedkeys, 'keyMapFile':keyMapFile})
 
-
-############### main functions #####################
-def searchKeyMap(device, note, exact):
-    if map:
-        print(f'searching keymap for note {note} on {device}')
-        for key in mappedkeys:
-            if exact:
-                device = device
-            else:
-                device = key['input_device']
-            if (str(key['note']) == str(note)) and (key['input_device'] == device):
-                return key
-
 def searchIO(type, device):
     ### no problems
     global message_buffer, activeInput, activeOutput
@@ -233,25 +220,6 @@ def searchIO(type, device):
             portnum = 'None'
             activeOutput = 'None'
     return portnum
-
-# def loadKeyMap():
-#     global map, message_buffer
-#     try:
-#         mapfile = open(f'./keymaps/{keyMapFile}')
-#         map = json.loads(mapfile.read())
-#         mapfile.close()
-#     except Exception as err:
-#         print(f'Error loading keymap - {err}')
-#         message_buffer.append(f'Error loading keymap - {err}')
-#         logging.error(f'Error loading keymap - {err}')
-#         map = False
-#     return map
-#
-# def getMappedKeys():
-#     global mappedkeys
-#     tempKeys = loadKeyMap()
-#     mappedkeys = tempKeys
-#     return mappedkeys
 
 def setOutput(port):
     global outport, activeOutput
@@ -316,7 +284,6 @@ def end_MIDI():
 def scan_io(type):
     global midiout, outport_name, inports, filteredOutputList, filteredInputList, activeOutput, activeInput
     if type == 'rescan':
-        print("!!!!!!!!!! RESCANING MIDI !!!!!!!!!!!!!!!!!")
         end_MIDI()
 
     temp = []
@@ -454,10 +421,10 @@ def midi_main(settings_file):
                             # sio.emit('midi_msg', {'data': f'{msg.indevice} : {msg.midi}'})
                             if activeOutput != 'None':
                                 # print(settings['match_device'] == 'True')
-                                remap = searchKeyMap(msg.indevice, msg.note, settings['match_device'] == 'True')
+                                remap = searchKeyMap(mappedkeys, msg.indevice, msg.note, settings['match_device'] == 'True')
                                 if remap:
                                     print(f"Mapping for note {msg.note} on {msg.indevice} found")
-                                    if remap['type'] == 'PC':
+                                    if remap['type'] == 'PROGRAM_CHANGE':
                                         mw = MidiOutWrapper(midiout, ch=remap['channel'])
                                         mw.send_program_change(remap['value'])
                                         print(f"PC sent channel: {remap['channel']} value: {remap['value']}")
