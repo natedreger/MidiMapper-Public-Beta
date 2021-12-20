@@ -419,9 +419,16 @@ def midi_main(settings_file):
                         if msg.velocity > 0 and filter and msg.message_type == 'note_on' and msg.channel > 0:
                             sio.emit('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi}})
                             # sio.emit('midi_msg', {'data': f'{msg.indevice} : {msg.midi}'})
+                            remap = searchKeyMap(mappedkeys, msg.indevice, msg.note, settings['match_device'] == 'True')
+                            
+                            if remap and remap['type']=="OSC":
+                                OSC_client = udp_client.SimpleUDPClient(remap['host'], remap['port'])
+                                OSC_client.send_message(remap['message'],'')
+                                print(f'OSC message {remap["message"]}')
+                                sio.emit('midi_sent', {'data': f"Mapped to OSC message {remap['message']}"})
+
                             if activeOutput != 'None':
                                 # print(settings['match_device'] == 'True')
-                                remap = searchKeyMap(mappedkeys, msg.indevice, msg.note, settings['match_device'] == 'True')
                                 if remap:
                                     print(f"Mapping for note {msg.note} on {msg.indevice} found")
                                     if remap['type'] == 'PROGRAM_CHANGE':
@@ -435,11 +442,11 @@ def midi_main(settings_file):
                                         # mw.send_note_off(remap['new_note'])
                                         print(f"sent NOTE_ON {remap['new_note']}")
                                         sio.emit('midi_sent', {'data': f"Mapped to NOTE_ON Channel: {remap['channel']} Note: {remap['new_note']}"})
-                                    elif remap['type'] == 'OSC':
-                                        OSC_client = udp_client.SimpleUDPClient(remap['host'], remap['port'])
-                                        OSC_client.send_message(remap['message'],'')
-                                        print(f'OSC message {remap["message"]}')
-                                        sio.emit('midi_sent', {'data': f"Mapped to OSC message {remap['message']}"})
+                                    # elif remap['type'] == 'OSC':
+                                    #     OSC_client = udp_client.SimpleUDPClient(remap['host'], remap['port'])
+                                    #     OSC_client.send_message(remap['message'],'')
+                                    #     print(f'OSC message {remap["message"]}')
+                                    #     sio.emit('midi_sent', {'data': f"Mapped to OSC message {remap['message']}"})
                                 else:
                                     mw = MidiOutWrapper(midiout, ch=msg.channel)
                                     mw.send_note_on(msg.note)
