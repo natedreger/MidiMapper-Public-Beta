@@ -12,7 +12,9 @@
             // The connection URL has the following format, relative to the current page:
             //     http[s]://<domain>:<port>[/<namespace>]
             var socket = io();
-
+            var mapDevice = ""
+            var keyToMap = ""
+            var keyMapFile = ""
             // Event handler for new connections.
             // The callback function is invoked when a connection with the
             // server is established.
@@ -25,7 +27,13 @@
             // to the client. The data is then displayed in the "Received"
             // section of the page.
             socket.on('midi_msg', function(msg, cb) {
-                $('#log').prepend('<br>' + $('<div/>').text('Midi Received: ' + msg.data).html());
+                $('#log').prepend('<br>' + $('<div/>').text('Midi Received: ' + msg.data['device']+': ['+msg.data['midi']+']').html());
+                if (msg.data['midi'][2] > 0) {
+                  mapDevice = msg.data['device']
+                  keyToMap = msg.data['midi'][1]
+                  $('#device').text(mapDevice)
+                  $('#note_to_map').text(keyToMap)
+                }
                 if (cb)
                     cb();
             });
@@ -84,6 +92,8 @@
                 activeOutput = msg.activeOutput
                 settings = msg.settings
                 keymap = msg.keymap
+                keyMapFile = msg.keyMapFile
+                console.log(keyMapFile)
 
                 $('#log').prepend('<br>' + $('<div/>').text('Keymap Loaded').html());
 
@@ -112,7 +122,68 @@
                 return false;
               });
 
-            $('form#clear').submit(function(event) {
+            $("#edit_keymap").click(function(event) {
+                $("#keymap_editor").css("display", "block");
+                return false;
+              });
+
+            $("#keymap_done").click(function(event) {
+                $("#keymap_editor").css("display", "none");
+                return false;
+              });
+
+            $("#save_keymap").click(function(event) {
+                var new_mapping = {}
+                var selValue = $('#map_type').val();
+
+                new_mapping['input_device'] = mapDevice
+                new_mapping['note'] = keyToMap
+                new_mapping['type'] = selValue
+                new_mapping['output_device'] = 'Any'
+
+                switch (selValue) {
+                  case 'NOTE_ON':
+                    new_mapping['channel'] = parseInt($("#map_channel").val())
+                    new_mapping['new_note'] = parseInt($("#map_note").val())
+                    break
+                  case 'PROGRAM_CHANGE':
+                    new_mapping['channel'] = parseInt($("#map_channel").val())
+                    new_mapping['value'] = parseInt($("#map_pc").val())
+                    break
+                  case 'OSC':
+                    new_mapping['message'] = $("#map_osc").val()
+                    new_mapping['host'] = "localhost"
+                    new_mapping['port'] = 9001
+                    break
+                }
+                socket.emit('new_mapping', keyMapFile, new_mapping);
+                socket.emit('get_keymap');
+                return false;
+              });
+
+            $("#map_type").change(function(event) {
+                $("#channel").css("display", "none");
+                $("#new_note").css("display", "none");
+                $("#pc").css("display", "none");
+                $("#osc").css("display", "none");
+                var selValue = $(this).val();
+                switch (selValue) {
+                  case 'NOTE_ON':
+                    $("#new_note").css("display", "block");
+                    $("#channel").css("display", "block");
+                    break
+                  case 'PROGRAM_CHANGE':
+                    $("#pc").css("display", "block");
+                    $("#channel").css("display", "block");
+                    break
+                  case 'OSC':
+                    $("#osc").css("display", "block");
+                    break
+                }
+                return false;
+              });
+
+            $('#clear').click(function(event) {
                 $("#log").html("");
                 return false;
             });
@@ -142,10 +213,52 @@
         <input type="number" min="0" max="127" name="program" id="program" placeholder="9" value="9">
         <input type="submit" value="Send PC">
     </form>
-    <form id="clear" method="POST" action="#">
+    <!-- <form id="clear" method="POST" action="#">
         <input type="submit" value="Clear Log">
-    </form>
+    </form> -->
+    <input id="clear" type="button" value="Clear Log">
+
     <input id="reload_keymap" type="button" value="Reload Keymap">
+    <input id="edit_keymap" type="button" value="Edit">
+    <div id="keymap_editor" style="display:none">
+      <p>
+        <span>Note to Map:</span>
+        <span id="note_to_map" name="note_to_map">Press Key</span>
+        <span>from:</span>
+        <span id="device"></span>
+      </p>
+      <p>
+        <span> Map to:</span><br>
+        <select name="map_type" id="map_type">
+          <option>Select Type</option>
+          <option value="NOTE_ON">NOTE_ON</option>
+          <option value="PROGRAM_CHANGE">PROGRAM_CHANGE</option>
+          <option value="OSC">OSC</option>
+        </select>
+        <div id="channel" style="display:none">
+          <label for="map_channel">Channel:</label>
+          <select name="map_channel" id="map_channel">
+            {% for n in range(1,17) %}
+              <option value="{{n}}">{{ n }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div id="new_note" style="display:none">
+          <label for="map_note">Note:</label>
+          <input type="number" id="map_note" name="map_note">
+        </div>
+        <div id="pc" style="display:none">
+          <label for="map_pc">Program Number:</label>
+          <input type="number" id="map_pc" name="map_pc">
+        </div>
+        <div id="osc" style="display:none">
+          <label for="map_osc">OSC Command:</label>
+          <input type="text" id="map_osc" name="map_osc">
+        </div>
+      </p>
+      <input type="button" id="save_keymap" value="Save">
+      <input type="button" id="keymap_done" value="Done">
+    </div>
     <h2>Keymap:</h2>
     <div id="keymap"></div>
     <h2>Info:</h2>

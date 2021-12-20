@@ -25,6 +25,7 @@ from midioutwrapper import MidiOutWrapper
 from probe_ports import probe_ports, getAvailableIO
 from logger import *
 from globals import owner
+from keymap import getMappedKeys
 
 # log = logging.getLogger('midiout')
 # logging.basicConfig(level=logging.DEBUG)
@@ -121,13 +122,15 @@ def select_io(message):
 
 @sio.on('rescan_io')
 def rescan_io():
+    # temp workaround for rescan not working
     sio.emit('restart_midi')
     # scan_io('rescan')
     # send_settings()
 
 @sio.on('reload_keymap')
 def reload_keymap():
-    getMappedKeys()
+    global mappedkeys
+    mappedkeys = getMappedKeys(keyMapFile)
     send_settings()
 
 @sio.on('set_mode')
@@ -157,15 +160,16 @@ def update_settings():
 
 @sio.on('quit')
 def quit():
-    save_settings(settingsFile, settings)
+    save_midiSetting(settingsFile, settings)
 
 @sio.on('save_settings')
 def save_settings(settings):
-    save_settings(settingsFile, settings)
+    save_midiSetting(settingsFile, settings)
     send_client_msg('MIDI Settings Saved')
 
 @sio.on('apply_settings')
 def apply_settings():
+    # temp workaround for rescan not working
     sio.emit('restart_midi')
     # load_settings(settingsFile)
     # scan_io('rescan')
@@ -185,7 +189,7 @@ def send_client_msg(message):
 def send_settings():
     sio.emit('setup', {'match_device':match_device, 'midi_mode':midi_mode, 'outputs':filteredOutputList, 'inputs':filteredInputList, \
             'activeOutput':activeOutput, 'activeInput':activeInput,\
-            'settings':settings, 'keymap':mappedkeys})
+            'settings':settings, 'keymap':mappedkeys, 'keyMapFile':keyMapFile})
 
 
 ############### main functions #####################
@@ -230,23 +234,24 @@ def searchIO(type, device):
             activeOutput = 'None'
     return portnum
 
-def loadKeyMap():
-    global map, message_buffer
-    try:
-        mapfile = open(f'./keymaps/{keyMapFile}')
-        map = json.loads(mapfile.read())
-        mapfile.close()
-    except Exception as err:
-        print(f'Error loading keymap - {err}')
-        message_buffer.append(f'Error loading keymap - {err}')
-        map = False
-    return map
-
-def getMappedKeys():
-    global mappedkeys
-    tempKeys = loadKeyMap()
-    mappedkeys = tempKeys
-    return mappedkeys
+# def loadKeyMap():
+#     global map, message_buffer
+#     try:
+#         mapfile = open(f'./keymaps/{keyMapFile}')
+#         map = json.loads(mapfile.read())
+#         mapfile.close()
+#     except Exception as err:
+#         print(f'Error loading keymap - {err}')
+#         message_buffer.append(f'Error loading keymap - {err}')
+#         logging.error(f'Error loading keymap - {err}')
+#         map = False
+#     return map
+#
+# def getMappedKeys():
+#     global mappedkeys
+#     tempKeys = loadKeyMap()
+#     mappedkeys = tempKeys
+#     return mappedkeys
 
 def setOutput(port):
     global outport, activeOutput
@@ -284,7 +289,7 @@ def load_settings(settings_file):
     filterInput.clear()
     filterInput.append(defaultInput)
 
-def save_settings(settings_file, new_settings):
+def save_midiSetting(settings_file, new_settings):
     settings = new_settings
     settings['last_input'] = filterInput
     settings['last_output'] = activeOutput
@@ -413,14 +418,14 @@ class MidiInput:
 
 def midi_main(settings_file):
     logging.debug(f'midi_mapper.py running as PID: {os.getpid()} as User: {owner(os.getpid())}')
-    global settingsFile, midi_mode
+    global settingsFile, midi_mode, mappedkeys
     logging.info(f"{ __name__} started")
     settingsFile = settings_file
     load_settings(settingsFile)
+    mappedkeys = getMappedKeys(keyMapFile)
     scan_io('initial')
     setOutput(searchIO('output', defaultOutput))
     searchIO('input', defaultInput)
-    getMappedKeys()
 
     connected = False
     while not connected:
@@ -445,7 +450,8 @@ def midi_main(settings_file):
                     if msg:
                         filter = ('All' in filterInput) or (msg.indevice in filterInput)
                         if msg.velocity > 0 and filter and msg.message_type == 'note_on' and msg.channel > 0:
-                            sio.emit('midi_msg', {'data': f'{msg.indevice} : {msg.midi}'})
+                            sio.emit('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi}})
+                            # sio.emit('midi_msg', {'data': f'{msg.indevice} : {msg.midi}'})
                             if activeOutput != 'None':
                                 # print(settings['match_device'] == 'True')
                                 remap = searchKeyMap(msg.indevice, msg.note, settings['match_device'] == 'True')
@@ -485,7 +491,8 @@ def midi_main(settings_file):
                     msg = MidiMessage(q.get(1))
                     filter = ('All' in filterInput) or (msg.indevice in filterInput)
                     if filter and msg.channel > 0:
-                        sio.emit('midi_msg', {'data': f'{msg.indevice} : {msg.midi}'})
+                        sio.emit('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi}})
+                        # sio.emit('midi_msg', {'data': f'{msg.indevice} : {msg.midi}'})
                         if msg.message_type == 'note_on':
                             mw = MidiOutWrapper(midiout, ch=msg.channel)
                             mw.send_note_on(msg.note, msg.velocity)
@@ -508,7 +515,7 @@ def midi_main(settings_file):
             sio.emit('client_msg', f'Something Went Wrong with MIDI - {err} - Restarting MIDI' )
             sio.emit('restart_midi')
     except Exception as err:
-        save_settings(settings_file, settings)
+        save_midiSetting(settings_file, settings)
         end_MIDI()
         logging.info(f"{ __name__} - MIDI Ended - {err} ")
         print('Exiting')

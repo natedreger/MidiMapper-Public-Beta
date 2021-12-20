@@ -13,6 +13,7 @@ import sys
 
 from logger import *
 from globals import owner, VERSION
+from keymap import add_keymap
 
 cli = sys.modules['flask.cli']
 cli.show_server_banner = lambda *x: None
@@ -33,9 +34,10 @@ def log():
 def settings():
     return render_template('settings.html', async_mode=socketio.async_mode, version=VERSION)
 
-@app.route('/keymap')
+@app.route('/keymap', methods=['GET'])
 def keymap():
     return render_template('keymap.html', async_mode=socketio.async_mode, version=VERSION)
+
 
 
 ################## APP SOCKETS ################################
@@ -72,7 +74,7 @@ def save_settings(data):
 
 def send_settings():
     socketio.emit('settings', {'match_device':match_device,'midi_mode':midi_mode, 'availableInputs':availableInputs, 'availableOutputs':availableOutputs, \
-                    'activeInput':activeInput, 'activeOutput':activeOutput, 'settings':settings, 'keymap':keymap})
+                    'activeInput':activeInput, 'activeOutput':activeOutput, 'settings':settings, 'keymap':keymap, 'keyMapFile':keyMapFile})
 
 ################# forward main app to web interface #########################
 
@@ -102,6 +104,13 @@ def quit():
     time.sleep(1)
     socketio.emit('quit')
 
+####################### forward web interface to keymap.py ########################3
+
+@socketio.on('new_mapping')
+def new_mapping(keymap, map):
+    add_keymap(keymap, map)
+
+
 ################# forward midi_mapper to web interface ######################
 @socketio.on('client_msg')
 def client_msg(message):
@@ -109,7 +118,7 @@ def client_msg(message):
 
 @socketio.on('setup')
 def setup(message):
-    global midi_mode, availableInputs, activeOutput, availableOutputs, activeInput, settings, keymap, match_device
+    global midi_mode, availableInputs, activeOutput, availableOutputs, activeInput, settings, keymap, match_device, keyMapFile
     availableInputs = message['inputs']
     activeOutput = message['activeOutput']
     availableOutputs = message['outputs']
@@ -118,6 +127,7 @@ def setup(message):
     keymap = message['keymap']
     midi_mode = message['midi_mode']
     match_device = message['match_device']
+    keyMapFile = message['keyMapFile']
     send_settings()
 
 @socketio.on('io_set')

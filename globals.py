@@ -1,7 +1,7 @@
 import pwd
 import sys
 import os
-
+import json
 from dotenv import load_dotenv
 
 
@@ -25,3 +25,38 @@ def owner(pid):
         if ln.startswith('Uid:'):
             uid = int(ln.split()[UID])
             return pwd.getpwuid(uid).pw_name
+
+def load_settings(settings_file):
+    global settings, defaultInput, defaultOutput, filterInput, ignoreInputs, \
+            ignoreOutputs, keyMapFile, socket_port, midi_mode, match_device
+    file = open(settings_file)
+    settings = json.loads(file.read())
+    file.close()
+
+    keyMapFile = settings['keymap']
+    defaultInput = settings['default_input']
+    defaultOutput = settings['default_output']
+    ignoreInputs = settings['hide_inputs']
+    ignoreOutputs = settings['hide_outputs']
+    socket_port = settings['socket_port']
+    midi_mode = settings['midi_mode']
+    match_device = settings['match_device']
+    filterInput.clear()
+    filterInput.append(defaultInput)
+
+def read_settings(settings_file):
+    file = open(settings_file)
+    settings = json.loads(file.read())
+    file.close()
+    return settings
+
+def save_settings(settings_file, new_settings):
+    settings = new_settings
+    settings['last_input'] = filterInput
+    settings['last_output'] = activeOutput
+    settings['last_keymap'] = keyMapFile
+
+    file = open(settings_file,'w')
+    file.write(json.dumps(settings))
+    file.close()
+    print('MIDI Settings Saved')
