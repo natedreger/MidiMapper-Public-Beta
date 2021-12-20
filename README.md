@@ -31,6 +31,7 @@ Future features to implement :
 
 Known Issues to fix :
 - [ ] rescan midi I/O results in corrupt data upon next note (for now midi will be restarted)
+- [ ] save settings doesn't save match device
 
 Built using :
 - python-rtmidi
