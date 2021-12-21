@@ -20,14 +20,13 @@ cli.show_server_banner = lambda *x: None
 app = Flask(__name__)
 socketio = SocketIO(app)
 
-
 @app.route('/')
 def index():
     return render_template('index.html', async_mode=socketio.async_mode, version=VERSION)
 
 @app.route('/log')
 def log():
-    return render_template('log.html', async_mode=socketio.async_mode, version=VERSION, log=loadLog())
+    return render_template('log.html', async_mode=socketio.async_mode, version=VERSION, log=loadLog(), logLevel=getLogLevel())
 
 @app.route('/settings')
 def settings():
@@ -120,6 +119,17 @@ def delete_mapping(keymap, note, device):
 @socketio.on('search_keymap')
 def search_keymap(keymap, device, note):
     socketio.emit('search_keymap_return', searchKeyMap(keymap, device, note, False))
+
+################# forward midi_mapper to logger ######################
+
+@socketio.on('newLogLevel')
+def newLogLevel(message):
+    setLogLevel(message)
+    socketio.emit('loglevel', getLogLevel())
+
+@socketio.on('clear_log')
+def clear_log():
+    clearLog()
 
 ################# forward midi_mapper to web interface ######################
 @socketio.on('client_msg')

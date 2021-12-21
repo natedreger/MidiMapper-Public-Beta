@@ -10,7 +10,6 @@ sys.path.insert(0, os.path.dirname(__file__))
 load_dotenv('.env')
 SETTINGS_FILE=os.environ.get('SETTINGS_FILE')
 VERSION=os.environ.get('VERSION')
-DEBUG_LEVEL=os.environ.get('DEBUG_LEVEL')
 
 
 

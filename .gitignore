@@ -7,5 +7,5 @@
 /venv
 *.pyc
 /data
-log.*
+*.log
 /testing

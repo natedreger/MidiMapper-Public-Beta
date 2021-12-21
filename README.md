@@ -16,7 +16,7 @@ MidiMapper also contains a builtin web interface for monitoring and setup.
 
 Still To Do :
 - [x] Rotating logs
-- [ ] GUI for log management
+- [x] GUI for log management
 - [x] Edit keymap via web interface
 - [x] Edit settings via web interface
 - [x] Change midi mode via web interface

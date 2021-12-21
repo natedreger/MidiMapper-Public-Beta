@@ -3,14 +3,56 @@
 {% block main%}
 <html>
 <head>
+    <meta id="flaskData" data-loglevel="{{logLevel}}" data-log="{{log}}">
+    <!-- <meta id="flaskData" data-loglevel="10" data-log="{{log}}"> -->
     <title>MIDI Monitor - Log</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js" integrity="sha512-aMGMvNYu8Ue4G+fHa359jcPb1u+ytAF+P2SCb+PxrjCdO3n3ZTxJ30zuH39rimUggmTwmh2u7wvQsDTHESnmfQ==" crossorigin="anonymous"></script>
+    <script src="static/js/functions.js"></script>
     <script type="text/javascript" charset="utf-8">
+      var socket = io();
+      const DebugOptions = {"NOTSET":0, "DEBUG":10, "INFO":20, "WARN":30, "ERROR":40, "CRITICAL":50}
+      var {loglevel, log} = document.querySelector('#flaskData').dataset;
+      loglevel = JSON.parse(loglevel);
+
+      $(document).ready(function() {
+        build_options_fromDict($("#debugLevelSelect"), DebugOptions, loglevel['logLevel'])
+
+        $("#setLevel").click(function(event) {
+            level = $('#debugLevelSelect').val()
+            socket.emit('newLogLevel', level);
+            return false;
+          });
+
+        $('#del_log').click(function(event) {
+            socket.emit('clear_log')
+            $("#log").html("");
+            return false;
+        });
+
+        socket.on('loglevel', function(msg) {
+          if (msg) {
+            msg = JSON.parse(msg)
+            newLevel = msg['logLevel']
+            // alert(msg)
+            $el = $("#debugLevelSelect")
+            $('#'+$el.attr("id")+' option[value="'+newLevel+'"]').attr('selected','selected')
+          }
+        })
+
+      })
+
     </script>
 </head>
 <body>
-  <div id="log" style="padding:10px">
+  <div>
+    <input id="del_log" type="button" value="Clear">
+    <select id="debugLevelSelect">
+      <!-- js builds -->
+    </select>
+    <input id="setLevel" type="button" value="Set">
+  </div>
+  <div id="log" style="padding:20px">
     {% for line in log %}
       {{ line }}<br>
     {% endfor %}
