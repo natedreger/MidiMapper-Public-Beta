@@ -5,8 +5,6 @@
 # midi_mapper.py
 #
 
-
-import logging
 import sys
 import time
 import json
@@ -27,11 +25,8 @@ from logger import *
 from globals import owner
 from keymap import getMappedKeys, searchKeyMap
 
-# log = logging.getLogger('midiout')
-# logging.basicConfig(level=logging.DEBUG)
-
 keyMapFile = 'default.json'
-# settingsFile = 'settings.json'
+settingsFile = 'settings.json'
 # Default out ports
 outport = 0
 
@@ -117,8 +112,8 @@ def select_io(message):
     send_settings()
     print(f"Input Filters changed to: {activeInput}")
     print(f"Output changed to: {activeOutput}")
-    logging.info(f"Input Filters changed to: {activeInput}")
-    logging.info(f"Output changed to: {activeOutput}")
+    logs.info(f"Input Filters changed to: {activeInput}")
+    logs.info(f"Output changed to: {activeOutput}")
 
 @sio.on('rescan_io')
 def rescan_io():
@@ -139,7 +134,7 @@ def set_mode(message):
     midi_mode = message
     send_settings()
     print(f"MIDI Mode changed to: {midi_mode}")
-    logging.info(f"MIDI Mode changed to: {midi_mode}")
+    logs.info(f"MIDI Mode changed to: {midi_mode}")
     send_client_msg(f"MIDI Mode changed to: {midi_mode}")
     if midi_mode == 'Mapped' and not map:
         send_client_msg(f"No Keymap Loaded")
@@ -329,7 +324,7 @@ def scan_io(type):
 
     except Exception as err:
         print('Something Went Wrong')
-        logging.error(f'Something Went Wrong While Scanning I/O: {err}')
+        logs.error(f'Something Went Wrong While Scanning I/O: {err}')
         sio.emit('client_msg', f'Something Went Wrong with MIDI: {err}')
         sio.emit('restart_midi')
         # end_MIDI()
@@ -384,9 +379,9 @@ class MidiInput:
 
 
 def midi_main(settings_file):
-    logging.debug(f'midi_mapper.py running as PID: {os.getpid()} as User: {owner(os.getpid())}')
+    logs.debug(f'midi_mapper.py running as PID: {os.getpid()} as User: {owner(os.getpid())}')
     global settingsFile, midi_mode, mappedkeys
-    logging.info(f"{ __name__} started")
+    logs.info(f"{ __name__} started")
     settingsFile = settings_file
     load_settings(settingsFile)
     mappedkeys = getMappedKeys(keyMapFile)
@@ -400,7 +395,7 @@ def midi_main(settings_file):
             sio.connect(f'http://{server_addr}:{socket_port}')
         except Exception as err:
             print("ConnectionError: %s", err)
-            logging.error(f"{ __name__} - {err}")
+            logs.error(f"{ __name__} - {err}")
         else:
             print("Connected!")
             connected = True
@@ -420,7 +415,7 @@ def midi_main(settings_file):
                             sio.emit('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi}})
                             # sio.emit('midi_msg', {'data': f'{msg.indevice} : {msg.midi}'})
                             remap = searchKeyMap(mappedkeys, msg.indevice, msg.note, settings['match_device'] == 'True')
-                            
+
                             if remap and remap['type']=="OSC":
                                 OSC_client = udp_client.SimpleUDPClient(remap['host'], remap['port'])
                                 OSC_client.send_message(remap['message'],'')
@@ -485,11 +480,11 @@ def midi_main(settings_file):
 
         except Exception as err:
             print(f"{ __name__} - Something Went Wrong with MIDI {err}")
-            logging.error(f"{ __name__} - Something Went Wrong with MIDI {err}")
+            logs.error(f"{ __name__} - Something Went Wrong with MIDI {err}")
             sio.emit('client_msg', f'Something Went Wrong with MIDI - {err} - Restarting MIDI' )
             sio.emit('restart_midi')
     except Exception as err:
         save_midiSetting(settings_file, settings)
         end_MIDI()
-        logging.info(f"{ __name__} - MIDI Ended - {err} ")
+        logs.info(f"{ __name__} - MIDI Ended - {err} ")
         print('Exiting')

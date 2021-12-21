@@ -216,11 +216,11 @@ def saveServerSettings(data, settings_file):
     print('Settings Saved')
 
 def server_main(settings_file):
-    logging.debug(f'web_interface.py running as PID: {os.getpid()} as User: {owner(os.getpid())}')
+    logs.debug(f'web_interface.py running as PID: {os.getpid()} as User: {owner(os.getpid())}')
     load_settings(settings_file)
     print('Server Main')
     print(f'[INFO] Starting server at http://localhost:{socket_port}')
-    logging.info(f"{__name__} started")
+    logs.info(f"{__name__} started")
     socketio.run(app=app, host='0.0.0.0', port=socket_port)
 
 if __name__ == "__main__":

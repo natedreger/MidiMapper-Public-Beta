@@ -26,11 +26,10 @@ from globals import owner, VERSION, SETTINGS_FILE
 
 
 
-logging.debug(f'app.py running as PID: {os.getpid()} as User: {owner(os.getpid())}')
+logs.debug(f'app.py running as PID: {os.getpid()} as User: {owner(os.getpid())}')
 
 midi_processes = []
 server_processes = []
-
 
 sio2 = socketio.Client()
 @sio2.event
@@ -49,7 +48,7 @@ def restart_midi():
     midi_processes[next_midi].start()
     # sio2.emit('midi_restarted')
     print('MIDI Restarted')
-    logging.info('MIDI Restarted')
+    logs.info('MIDI Restarted')
 
 @sio2.on('restart_server')
 def restart_server():
@@ -63,7 +62,7 @@ def restart_server():
     server_processes[next_server].start()
     restart_midi()
     print('Server Restarted')
-    logging.info('Server Restarted')
+    logs.info('Server Restarted')
 
 @sio2.on('quit')
 def quit():
@@ -72,7 +71,7 @@ def quit():
     print('Exiting')
     terminateProcesses()
     time.sleep(1.0)
-    logging.info(f"{__name__} quit")
+    logs.info(f"{__name__} quit")
     os._exit(os.EX_OK)
 
 @sio2.on('reboot')
@@ -109,7 +108,7 @@ load_settings()
 midi_processes.append(Process(target=midi_main, args=(SETTINGS_FILE,)))
 server_processes.append(Process(target=server_main, args=(SETTINGS_FILE,)))
 
-logging.info(f"{__name__} started")
+logs.info(f"{__name__} started")
 
 try:
     for server_process in server_processes:
@@ -123,7 +122,7 @@ try:
             sio2.connect(f'http://{server_addr}:{server_port}')
         except Exception as err:
             print("ConnectionError: %s", err)
-            logging.error(f"{__name__} - {err}")
+            logs.error(f"{__name__} - {err}")
         else:
             print("Connected!")
             connected = True

@@ -15,12 +15,17 @@ On a more advanced level MidiMapper allows keymaps to be created allowing note o
 MidiMapper also contains a builtin web interface for monitoring and setup.
 
 Still To Do :
+- [x] Rotating logs
+- [ ] GUI for log management
 - [x] Edit keymap via web interface
 - [x] Edit settings via web interface
 - [x] Change midi mode via web interface
 - [x] Match mapping device control
 - [x] remove lag from mode change
--
+
+Known Issues to fix :
+- [ ] rescan midi I/O results in corrupt data upon next note (for now midi will be restarted)
+- [ ] save settings doesn't save match device
 
 Future features to implement :
 - [ ] note to GPIO
@@ -29,9 +34,6 @@ Future features to implement :
 - [ ] Device to Device mapping
 - [X] Logs
 
-Known Issues to fix :
-- [ ] rescan midi I/O results in corrupt data upon next note (for now midi will be restarted)
-- [ ] save settings doesn't save match device
 
 Built using :
 - python-rtmidi
