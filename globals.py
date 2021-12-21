@@ -25,6 +25,18 @@ def owner(pid):
             uid = int(ln.split()[UID])
             return pwd.getpwuid(uid).pw_name
 
+def connectSocket(socketName, socket_addr, socket_port):
+    connected = False
+    while not connected:
+        try:
+            socketName.connect(f'http://{socket_addr}:{socket_port}')
+        except Exception as err:
+            print("ConnectionError: %s", err)
+            logs.error(f"{ __name__} - {err}")
+        else:
+            print("Connected!")
+            connected = True
+
 def load_settings(settings_file):
     global settings, defaultInput, defaultOutput, filterInput, ignoreInputs, \
             ignoreOutputs, keyMapFile, socket_port, midi_mode, match_device

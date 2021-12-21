@@ -206,6 +206,13 @@ def webMidiNoteIn(message):
 def webPCIn(message):
     socketio.emit('webPCIn', {'data': message['data']})
 
+################ OSC to Web Interface ###################################
+
+@socketio.on('incomingOSC')
+def incomingOSC(address, *args):
+    socketio.emit('my_response', {'data': address})
+    socketio.emit('incomingOSC', {'data': address})
+
 ################ Main Functions ###################################
 
 def load_settings(settings_file):

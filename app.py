@@ -21,6 +21,7 @@ from multiprocessing import Process
 
 from web_interface import server_main
 from midi_mapper import midi_main, end_MIDI
+from osc import osc_main
 from logger import *
 from globals import owner, VERSION, SETTINGS_FILE
 
@@ -30,6 +31,7 @@ logs.debug(f'app.py running as PID: {os.getpid()} as User: {owner(os.getpid())}'
 
 midi_processes = []
 server_processes = []
+osc_processes = []
 
 sio2 = socketio.Client()
 @sio2.event
@@ -100,6 +102,8 @@ def terminateProcesses():
         server_process.terminate()
     for midi_process in midi_processes:
         midi_process.terminate()
+    for osc_process in osc_processes:
+        osc_process.terminate()
     gc.collect()
 
 load_settings()
@@ -107,6 +111,7 @@ load_settings()
 # Create initial MIDI and server processes
 midi_processes.append(Process(target=midi_main, args=(SETTINGS_FILE,)))
 server_processes.append(Process(target=server_main, args=(SETTINGS_FILE,)))
+osc_processes.append(Process(target=osc_main, args=(settings,)))
 
 logs.info(f"{__name__} started")
 
@@ -115,6 +120,8 @@ try:
         server_process.start()
     for midi_process in midi_processes:
         midi_process.start()
+    for osc_process in osc_processes:
+        osc_process.start()
 
     connected = False
     while not connected:

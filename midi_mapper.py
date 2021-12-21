@@ -22,7 +22,7 @@ from rtmidi.midiutil import open_midioutput, open_midiinput
 from midioutwrapper import MidiOutWrapper
 from probe_ports import probe_ports, getAvailableIO
 from logger import *
-from globals import owner
+from globals import owner, connectSocket
 from keymap import getMappedKeys, searchKeyMap
 
 keyMapFile = 'default.json'
@@ -388,17 +388,8 @@ def midi_main(settings_file):
     scan_io('initial')
     setOutput(searchIO('output', defaultOutput))
     searchIO('input', defaultInput)
-
-    connected = False
-    while not connected:
-        try:
-            sio.connect(f'http://{server_addr}:{socket_port}')
-        except Exception as err:
-            print("ConnectionError: %s", err)
-            logs.error(f"{ __name__} - {err}")
-        else:
-            print("Connected!")
-            connected = True
+    
+    connectSocket(sio, server_addr, socket_port)
 
     # main program
     print("Entering MIDI loop. ")
