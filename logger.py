@@ -31,8 +31,6 @@ def clearLog():
     file.write('')
     file.close()
 
-# NOTSET=0, DEBUG=10, INFO=20, WARN=30, ERROR=40, and CRITICAL=50
-
 def setLogLevel(level):
     global logLevel, logLevelName
     level = int(level)

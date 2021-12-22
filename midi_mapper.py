@@ -86,6 +86,20 @@ def webMidiNoteIn(message):
     else:
         send_ignore(indevice)
 
+@sio.on('OSC2MIDI_in')
+def OSC2MIDI_in(message):
+    indevice = message[0]
+    ch = message[1][0]
+    note = message[1][1]
+    message_type = message[2]
+    filter = ('All' in filterInput) or (indevice in filterInput)
+    if filter:
+        if message_type == 'NOTE_ON':
+            q.put([indevice, message[1]])
+            sio.emit('midi_sent', {'data': f'MIDI channel: {ch} value: {note}'})
+    else:
+        send_ignore(indevice)
+
 @sio.on('webPCIn')
 def webPCIn(message):
     ch = int(message['data'][0])
@@ -388,7 +402,7 @@ def midi_main(settings_file):
     scan_io('initial')
     setOutput(searchIO('output', defaultOutput))
     searchIO('input', defaultInput)
-    
+
     connectSocket(sio, server_addr, socket_port)
 
     # main program
@@ -428,11 +442,6 @@ def midi_main(settings_file):
                                         # mw.send_note_off(remap['new_note'])
                                         print(f"sent NOTE_ON {remap['new_note']}")
                                         sio.emit('midi_sent', {'data': f"Mapped to NOTE_ON Channel: {remap['channel']} Note: {remap['new_note']}"})
-                                    # elif remap['type'] == 'OSC':
-                                    #     OSC_client = udp_client.SimpleUDPClient(remap['host'], remap['port'])
-                                    #     OSC_client.send_message(remap['message'],'')
-                                    #     print(f'OSC message {remap["message"]}')
-                                    #     sio.emit('midi_sent', {'data': f"Mapped to OSC message {remap['message']}"})
                                 else:
                                     mw = MidiOutWrapper(midiout, ch=msg.channel)
                                     mw.send_note_on(msg.note)

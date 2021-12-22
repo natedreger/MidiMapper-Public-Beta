@@ -211,7 +211,11 @@ def webPCIn(message):
 @socketio.on('incomingOSC')
 def incomingOSC(address, *args):
     socketio.emit('my_response', {'data': address})
-    socketio.emit('incomingOSC', {'data': address})
+    socketio.emit('incomingOSC', address)
+
+@socketio.on('OSC2MIDI_out')
+def OSC2MIDI_out(message):
+    socketio.emit('OSC2MIDI_in', message)
 
 ################ Main Functions ###################################
 

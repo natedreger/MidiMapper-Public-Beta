@@ -1,6 +1,6 @@
 // Global Constants
 
-BaseinputOptions = ['None', 'All', 'Web Interface']
+BaseinputOptions = ['None', 'All', 'Web Interface', 'OSC2MIDI']
 BaseoutputOptions = ['None', 'All']
 ModeOptions = ['Thru', 'Mapped']
 
