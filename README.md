@@ -29,7 +29,7 @@ Known Issues to fix :
 
 Future features to implement :
 - [ ] note to GPIO
-- [ ] OSC to MIDI
+- [x] OSC to MIDI
 - [ ] Channel Routing
 - [ ] Device to Device mapping
 - [X] Logs
