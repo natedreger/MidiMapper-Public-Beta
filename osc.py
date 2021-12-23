@@ -1,8 +1,10 @@
 import socketio
 import os
 
+
 from logger import *
 from globals import connectSocket, owner
+from pythonosc import udp_client
 from pythonosc.dispatcher import Dispatcher
 from pythonosc.osc_server import BlockingOSCUDPServer
 from midi_mapper import q
@@ -22,7 +24,7 @@ def osc_handler(address, *args):
 
 def parseOSC(address, *args):
     address = '/MIDI/NOTE_ON/1/55'
-    # address = '/OSC/kampkrusty.local/9002/OS/open/QLab'
+    address = '/OSC/kampkrusty.local/8000/app/QLab/activate'
 
     addr = address.split('/')
     addr.pop(0)
@@ -46,10 +48,14 @@ def processOSC(addr):
     elif addr[0] == 'OSC':
         destination = addr[1]
         dest_port = addr[2]
+        del addr[:3]
+        message = '/'
+        message = f'/{message.join(addr)}'
+        print(message)
+        OSC_client = udp_client.SimpleUDPClient(destination, int(dest_port))
+        OSC_client.send_message(message,'')
         print(destination, dest_port)
-        # command = addr[3]...addr[length]
-        # create OSC message
-        pass
+        oscSocket.emit('midi_sent', {'data': f"Mapped to OSC message {message}"})
     else:
         pass
 
