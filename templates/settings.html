@@ -105,7 +105,7 @@
             $("#save_form_settings").click(function(event) {
                 form = document.getElementById('settings_form')
                 $.each(form.elements, function(key, value) {
-                  console.log(value.name + ' ' + value.value)
+                  // console.log(value.name + ' ' + value.value)
                   // if is checkbox then do Something
                   settings[value.name] = value.value
                 })

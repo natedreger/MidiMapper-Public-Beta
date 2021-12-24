@@ -35,6 +35,18 @@
                     cb();
             });
 
+            socket.on('incomingOSC', function(msg, cb) {
+              $('#log').prepend('<br>' + $('<div/>').text('OSC Received: ' + msg).html());
+              if (cb)
+              cb();
+            });
+
+            socket.on('outgoingOSC', function(msg) {
+                $('#log').prepend('<br>' + $('<div/>').text('OSC Sent: ' + msg).html());
+                if (cb)
+                    cb();
+            });
+
             socket.on('confirm_io', function(msg, cb) {
                 $('#log').prepend('<br>' + $('<div/>').text('Input: ' + msg.data['input'] + ' Output: ' + msg.data['output']).html());
                 if (cb)

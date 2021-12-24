@@ -17,14 +17,14 @@ osc_port = 9001
 oscSocket = socketio.Client()
 
 def osc_handler(address, *args):
-    # print(address)
+    print(address)
     parseOSC(address, *args)
-    oscSocket.emit('incomingOSC', address, *args)
+    oscSocket.emit('incomingOSC', address)
 
 
 def parseOSC(address, *args):
-    address = '/MIDI/NOTE_ON/1/55'
-    address = '/OSC/kampkrusty.local/8000/app/QLab/activate'
+    # address = '/MIDI/NOTE_ON/1/55'
+    # address = '/OSC/kampkrusty.local/8000/app/QLab/activate'
 
     addr = address.split('/')
     addr.pop(0)
@@ -51,11 +51,9 @@ def processOSC(addr):
         del addr[:3]
         message = '/'
         message = f'/{message.join(addr)}'
-        print(message)
         OSC_client = udp_client.SimpleUDPClient(destination, int(dest_port))
         OSC_client.send_message(message,'')
-        print(destination, dest_port)
-        oscSocket.emit('midi_sent', {'data': f"Mapped to OSC message {message}"})
+        oscSocket.emit('outgoingOSC', f'{destination}:{dest_port}{message}')
     else:
         pass
 

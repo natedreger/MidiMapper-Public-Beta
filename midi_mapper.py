@@ -96,7 +96,11 @@ def OSC2MIDI_in(message):
     if filter:
         if message_type == 'NOTE_ON':
             q.put([indevice, message[1]])
-            sio.emit('midi_sent', {'data': f'MIDI channel: {ch} value: {note}'})
+            # sio.emit('midi_sent', {'data': f'NOTE_ON channel: {ch} value: {note}'})
+        elif message_type == 'PROGRAM_CHANGE':
+            message[1][0] = ch * 100 #setting a flag for MidiMessage
+            q.put([indevice, message[1]])
+            # sio.emit('midi_sent', {'data': f'PROGRAM_CHANGE channel: {ch} value: {note}'})
     else:
         send_ignore(indevice)
 
@@ -352,7 +356,7 @@ class MidiMessage:
         self.channel=self.midi[0]-143
         self.note=self.midi[1]
         self.velocity=self.midi[2]
-        if self.channel > 16:
+        if self.channel > 16 and self.channel < 100:
             if self.channel == 33 and self.note == 64:
                 self.message_type = 'sustain'
             elif self.note == 7:
@@ -366,6 +370,9 @@ class MidiMessage:
         elif self.channel < 0:
             self.channel = self.channel+16
             self.message_type = 'note_off'
+        elif self.channel > 1000:
+            self.channel = self.channel/100
+            self.message_type = 'program_change'
         elif self.velocity == 0:
             self.message_type = 'note_off'
         else:
