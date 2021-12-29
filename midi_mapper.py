@@ -435,7 +435,7 @@ def midi_main(settings_file):
                                     print(f'OSC message {remap["message"]}')
                                     sio.emit('midi_sent', {'data': f"Mapped to OSC message {remap['message']}"})
                                 except Exception as err:
-                                    sio.emit('client_msg', f'Error: {err}')
+                                    sio.emit('client_msg', f"Error: {remap['host']}:{remap['port']} {err}")
                             if activeOutput != 'None':
                                 # print(settings['match_device'] == 'True')
                                 if remap:
