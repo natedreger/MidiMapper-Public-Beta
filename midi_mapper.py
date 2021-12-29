@@ -429,11 +429,13 @@ def midi_main(settings_file):
                             remap = searchKeyMap(mappedkeys, msg.indevice, msg.note, settings['match_device'] == 'True')
 
                             if remap and remap['type']=="OSC":
-                                OSC_client = udp_client.SimpleUDPClient(remap['host'], remap['port'])
-                                OSC_client.send_message(remap['message'],'')
-                                print(f'OSC message {remap["message"]}')
-                                sio.emit('midi_sent', {'data': f"Mapped to OSC message {remap['message']}"})
-
+                                try:
+                                    OSC_client = udp_client.SimpleUDPClient(remap['host'], remap['port'])
+                                    OSC_client.send_message(remap['message'],'')
+                                    print(f'OSC message {remap["message"]}')
+                                    sio.emit('midi_sent', {'data': f"Mapped to OSC message {remap['message']}"})
+                                except Exception as err:
+                                    sio.emit('client_msg', f'Error: {err}')
                             if activeOutput != 'None':
                                 # print(settings['match_device'] == 'True')
                                 if remap:
