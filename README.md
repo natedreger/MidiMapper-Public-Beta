@@ -2,7 +2,7 @@
 
 VERY MUCH A BETA!
 
-I built MidiMapper to be a one stop shop for controlling various devices using USB MIDI keyboards or pads.  I'm running this as a deamon on a Raspberry PI 4 to provide a stand alone solution.
+I built MidiMapper to be a one stop shop for controlling various devices using USB MIDI keyboards or pads.  I'm running this as a daemon on a Raspberry PI 4 to provide a stand alone solution.
 
 At it's most basic is a USB MIDI host to convert between USB keyboards and traditional 5-Pin MIDI. A 'thru' mode allows MIDI to pass directly from one device to another with minimal latency.
 
