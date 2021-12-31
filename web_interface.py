@@ -13,7 +13,7 @@ import sys
 
 from logger import *
 from globals import owner, VERSION
-from keymap import add_keymap, searchKeyMap, modify_keymap, del_keymap
+from keymap import *
 cli = sys.modules['flask.cli']
 cli.show_server_banner = lambda *x: None
 
@@ -35,7 +35,6 @@ def settings():
 @app.route('/keymap', methods=['GET'])
 def keymap():
     return render_template('keymap.html', async_mode=socketio.async_mode, version=VERSION)
-
 
 
 ################## APP SOCKETS ################################
@@ -96,6 +95,16 @@ def restart_server():
     client_msg('Sent Restart Server')
     socketio.emit('restart_server')
 
+@socketio.on('reboot')
+def reboot_host():
+    client_msg('Sent Reboot Host')
+    socketio.emit('reboot')
+
+@socketio.on('shutdown')
+def shutdown_host():
+    client_msg('Sent Shutdown Host')
+    socketio.emit('shutdown')
+
 @socketio.on('quit')
 def quit():
     client_msg('Quitting')
@@ -103,6 +112,19 @@ def quit():
     socketio.emit('quit')
 
 ####################### forward web interface to keymap.py ########################3
+
+@socketio.on('list_keymaps')
+def list_keymaps():
+    socketio.emit('return_keymap_list', listKeyMaps())
+
+@socketio.on('new_keymap_file')
+def new_keymap_file(message):
+    success = newKeyMap(message)
+    if success:
+        client_msg(f'File {message}.json created')
+        socketio.emit('return_keymap_list', listKeyMaps())
+    else:
+        client_msg(f'Failed - {message}.json already exists')
 
 @socketio.on('new_mapping')
 def new_mapping(keymap, map):
@@ -189,6 +211,10 @@ def rescan_io():
 @socketio.on('get_keymap')
 def get_keymap():
     socketio.emit('reload_keymap',)
+
+@socketio.on('open_keymap')
+def open_keymap(message):
+    socketio.emit('open_keymap',message)
 
 @socketio.on('apply_settings')
 def apply_settings():

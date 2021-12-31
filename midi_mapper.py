@@ -146,6 +146,16 @@ def reload_keymap():
     mappedkeys = getMappedKeys(keyMapFile)
     send_settings()
 
+@sio.on('open_keymap')
+def open_keymap(openMapFile):
+    global mappedkeys, settings, keyMapFile
+    settings['last_keymap'] = keyMapFile
+    mappedkeys = getMappedKeys(openMapFile)
+    settings['keymap'] = openMapFile
+    save_midiSetting(settingsFile, settings)
+    keyMapFile = openMapFile
+    send_settings()
+
 @sio.on('set_mode')
 def set_mode(message):
     global midi_mode
@@ -425,7 +435,6 @@ def midi_main(settings_file):
                         filter = ('All' in filterInput) or (msg.indevice in filterInput)
                         if msg.velocity > 0 and filter and msg.message_type == 'note_on' and msg.channel > 0:
                             sio.emit('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi}})
-                            # sio.emit('midi_msg', {'data': f'{msg.indevice} : {msg.midi}'})
                             remap = searchKeyMap(mappedkeys, msg.indevice, msg.note, settings['match_device'] == 'True')
 
                             if remap and remap['type']=="OSC":

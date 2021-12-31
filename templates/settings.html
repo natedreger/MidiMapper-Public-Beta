@@ -125,7 +125,20 @@
               });
 
             $("#quit").click(function(event) {
+                confirm("You want to Quit MidiMapper?");
                 socket.emit('quit');
+                return false;
+              });
+
+            $("#reboot_host").click(function(event) {
+                confirm("You want to Reboot Host Computer?");
+                socket.emit('reboot');
+                return false;
+              });
+
+            $("#shutdown_host").click(function(event) {
+                confirm("You want to Shutdown Host Computer?");
+                socket.emit('shutdown');
                 return false;
               });
 
@@ -164,6 +177,8 @@
       <input id="restart_midi" type="button" value="Restart MIDI">
       <input id="restart_server" type="button" value="Restart Server">
       <input id="quit" type="button" value="Quit">
+      <input id="reboot_host" type="button" value="Reboot Host">
+      <input id="shutdown_host" type="button" value="Shutdown Host">
     </div>
     <div style="padding-top:20px; padding-bottom:20px">
       <form id="settings_form" method="POST" action="#">

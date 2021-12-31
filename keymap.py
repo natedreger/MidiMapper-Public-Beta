@@ -1,10 +1,14 @@
 #edit_json.py
 
 import json
+import os
 
 from logger import *
 from globals import *
 
+def listKeyMaps():
+    keymaps = os.listdir(f'{os.getcwd()}/keymaps')
+    return keymaps
 
 def loadKeyMap(keyMapFile):
     global map, message_buffer
@@ -43,6 +47,17 @@ def getKeyMapIndex(current_keys, new_map):
             return index
         index += 1
 
+def newKeyMap(keyMapFile):
+    fileName = f'{keyMapFile}.json'
+    existing = listKeyMaps()
+    if fileName in existing:
+        return False
+    else:
+        f = open(f'./keymaps/{fileName}', 'w')
+        f.write('[]')
+        f.close()
+        return True
+
 def saveKeymap(keyMapFile, map):
     try:
         f = open(f'./keymaps/{keyMapFile}','w')
@@ -60,11 +75,16 @@ def add_keymap(mapfile, new_map):
 
 def del_keymap(mapfile, note, device):
     new_map={}
-    current_keys = getMappedKeys(mapfile)
     new_map['note'] = note
     new_map['input_device'] = device
-    current_keys.pop(getKeyMapIndex(current_keys, new_map))
-    saveKeymap(mapfile, json.dumps(current_keys))
+    try:
+        current_keys = getMappedKeys(mapfile)
+        current_keys.pop(getKeyMapIndex(current_keys, new_map))
+        saveKeymap(mapfile, json.dumps(current_keys))
+    except TypeError as err:
+        logging.error(f'Error deleting mapped key - {err}')
+    except Exception as err:
+        logging.error(f'Error deleting mapped key - {err}')
 
 def modify_keymap(mapfile, new_map):
     current_keys = getMappedKeys(mapfile)

@@ -7,6 +7,45 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js" integrity="sha512-aMGMvNYu8Ue4G+fHa359jcPb1u+ytAF+P2SCb+PxrjCdO3n3ZTxJ30zuH39rimUggmTwmh2u7wvQsDTHESnmfQ==" crossorigin="anonymous"></script>
     <script src="static/js/functions.js"></script>
     <script type="text/javascript" charset="utf-8">
+
+        function hide_fields() {
+          $("#channel").css("display", "none");
+          $("#new_note").css("display", "none");
+          $("#pc").css("display", "none");
+          $("#osc").css("display", "none");
+          $("#osc_host").css("display", "none");
+          $("#osc_port").css("display", "none");
+        }
+
+        function show_fields(type) {
+          hide_fields()
+          switch (type) {
+            case 'NOTE_ON':
+              $("#new_note").css("display", "block");
+              $("#channel").css("display", "block");
+              break
+            case 'PROGRAM_CHANGE':
+              $("#pc").css("display", "block");
+              $("#channel").css("display", "block");
+              break
+            case 'OSC':
+              $("#osc").css("display", "block");
+              $("#osc_host").css("display", "block");
+              $("#osc_port").css("display", "block");
+              break
+          }
+        }
+
+        function clear_fields(){
+          // alert('clear')
+          $("#map_channel").val('');
+          $("#map_note").val('')
+          $("#map_pc").val('')
+          $("#map_osc").val('')
+          $("#osc_host").val('')
+          $("#osc_port").val('')
+        }
+
         $(document).ready(function() {
             // Connect to the Socket.IO server.
             // The connection URL has the following format, relative to the current page:
@@ -18,19 +57,13 @@
             var keymap = []
             var mode = "view"
             var keyExists = false
-            function hide_fields() {
-              $("#channel").css("display", "none");
-              $("#new_note").css("display", "none");
-              $("#pc").css("display", "none");
-              $("#osc").css("display", "none");
-              $("#osc_host").css("display", "none");
-              $("#osc_port").css("display", "none");
-            }
+            var availableKeymaps = []
             // Event handler for new connections.
             // The callback function is invoked when a connection with the
             // server is established.
             socket.on('connect', function() {
                 socket.emit('get_settings', {data: 'I\'m connected!'});
+                socket.emit('list_keymaps');
             });
 
             // Event handler for server sent data.
@@ -57,7 +90,30 @@
             socket.on('search_keymap_return', function(msg) {
               if (msg) {
                 keyExists = true
-                alert('Note '+msg['note']+' on '+msg['input_device']+' is already mapped to '+ msg['type'])
+                console.log(msg)
+                confirm('Note '+msg['note']+' on '+msg['input_device']+' is already mapped to '+ msg['type'])
+                $("#map_type").val(msg['type'])
+                // $('#'+$el.attr("id")+' option[value="'+activeOption+'"]').attr('selected','selected')
+                show_fields(msg['type'])
+                switch (msg['type']) {
+                  case 'NOTE_ON':
+                    $("#map_channel").val(msg['channel']);
+                    $("#map_note").val(msg['new_note'])
+                  case 'PROGRAM_CHANGE':
+                    $("#map_channel").val(msg['channel']);
+                    $("#map_pc").val(msg['value'])
+                  case 'OSC':
+                    $("#map_osc").val(msg['message'])
+                    $("#osc_host").val(msg['host'])
+                    $("#osc_port").val(msg['port'])
+                }
+              }
+            })
+
+            socket.on('return_keymap_list', function(msg) {
+              if (msg) {
+                availableKeymaps = msg
+                build_options($("#keymap_select"), availableKeymaps, keyMapFile)
               }
             })
 
@@ -83,30 +139,6 @@
                 $('#log').prepend('<br>' + $('<div/>').text('Output: ' + msg.outports[msg.port]).html());
                 if (cb)
                     cb();
-            });
-
-            // Interval function that tests message latency by sending a "ping"
-            // message. The server then responds with a "pong" message and the
-            // round trip time is measured.
-            var ping_pong_times = [];
-            var start_time;
-            window.setInterval(function() {
-                start_time = (new Date).getTime();
-                $('#transport').text(socket.io.engine.transport.name);
-                socket.emit('my_ping');
-            }, 1000);
-
-            // Handler for the "pong" message. When the pong is received, the
-            // time from the ping is stored, and the average of the last 30
-            // samples is average and displayed.
-            socket.on('my_pong', function() {
-                var latency = (new Date).getTime() - start_time;
-                ping_pong_times.push(latency);
-                ping_pong_times = ping_pong_times.slice(-30); // keep last 30 samples
-                var sum = 0;
-                for (var i = 0; i < ping_pong_times.length; i++)
-                    sum += ping_pong_times[i];
-                $('#ping-pong').text(Math.round(10 * sum / ping_pong_times.length) / 10);
             });
 
             socket.on('settings', function(msg, cb) {
@@ -140,10 +172,6 @@
                 return false;
             });
 
-            $("#reload_keymap").click(function(event) {
-                socket.emit('get_keymap');
-                return false;
-              });
 
             $("#edit_keymap").click(function(event) {
                 mode = "edit"
@@ -158,8 +186,29 @@
                 $("#keymap_editor").css("display", "none");
                 $("#map_input").css("display", "none");
                 $("#map_type").val('Select Type');
+                clear_fields()
                 return false;
               });
+
+            $("#reload_keymap").click(function(event) {
+              socket.emit('get_keymap');
+              return false;
+            });
+
+            $("#open_keymap").click(function(event) {
+              keyMapFile = $('#keymap_select').val()
+              socket.emit('open_keymap', keyMapFile);
+              return false;
+            });
+
+            $("#new_keymap_file").click(function(event) {
+              let fileName = prompt("Enter Filename without extention", "newKeyMap");
+              if (fileName != null) {
+                console.log(fileName)
+              }
+              socket.emit('new_keymap_file', fileName);
+              return false;
+            });
 
             $("#save_keymap").click(function(event) {
                 var new_mapping = {}
@@ -193,31 +242,19 @@
                   socket.emit('modify_mapping', keyMapFile, new_mapping);
                 }
                 socket.emit('get_keymap');
+                clear_fields()
                 return false;
               });
 
             $("#map_type").change(function(event) {
-                hide_fields()
                 var selValue = $(this).val();
-                switch (selValue) {
-                  case 'NOTE_ON':
-                    $("#new_note").css("display", "block");
-                    $("#channel").css("display", "block");
-                    break
-                  case 'PROGRAM_CHANGE':
-                    $("#pc").css("display", "block");
-                    $("#channel").css("display", "block");
-                    break
-                  case 'OSC':
-                    $("#osc").css("display", "block");
-                    $("#osc_host").css("display", "block");
-                    $("#osc_port").css("display", "block");
-                    break
-                }
+                show_fields(selValue)
                 return false;
               });
 
             $('#del_keymap').click(function(event) {
+                clear_fields()
+                hide_fields()
                 socket.emit('delete_mapping', keyMapFile, keyToMap, mapDevice)
                 socket.emit('get_keymap');
                 return false;
@@ -258,8 +295,15 @@
     </form> -->
     <input id="clear" type="button" value="Clear Log">
 
+    <div>
+      <select id="keymap_select">
+      <input id="open_keymap" type="button" value="Open Keymap">
+      </select>
+    </div>
+    <input id="new_keymap_file" type="button" value="New Map File">
     <input id="reload_keymap" type="button" value="Reload Keymap">
     <input id="edit_keymap" type="button" value="Edit">
+
     <div id="keymap_editor" style="display:none">
       <p>
         <div id="press_key">Press Key to Map</div>

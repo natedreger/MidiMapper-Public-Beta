@@ -23,9 +23,7 @@ from web_interface import server_main
 from midi_mapper import midi_main, end_MIDI
 from osc import osc_main
 from logger import *
-from globals import owner, VERSION, SETTINGS_FILE
-
-
+from globals import owner, VERSION, SETTINGS_FILE, read_settings
 
 logs.debug(f'app.py running as PID: {os.getpid()} as User: {owner(os.getpid())}')
 
@@ -33,7 +31,12 @@ midi_processes = []
 server_processes = []
 osc_processes = []
 
+settings = read_settings(SETTINGS_FILE)#json.loads(file.read())
+server_port = settings['socket_port']
+server_addr = 'localhost'
+
 sio2 = socketio.Client()
+
 @sio2.event
 def connect():
     print('[INFO] App Successfully connected to server.')
@@ -92,8 +95,8 @@ def reboot():
 
 def load_settings():
     global settings, server_port, server_addr
-    file = open(SETTINGS_FILE)
-    settings = json.loads(file.read())
+    # file = open(SETTINGS_FILE)
+    settings = read_settings(SETTINGS_FILE)#json.loads(file.read())
     server_port = settings['socket_port']
     server_addr = 'localhost'
 
