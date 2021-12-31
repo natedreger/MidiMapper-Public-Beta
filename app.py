@@ -19,10 +19,10 @@ import time
 import socketio
 from multiprocessing import Process
 
+from modules.logger import *
 from web_interface import server_main
 from midi_mapper import midi_main, end_MIDI
 from osc import osc_main
-from logger import *
 from globals import owner, VERSION, SETTINGS_FILE, read_settings
 
 logs.debug(f'app.py running as PID: {os.getpid()} as User: {owner(os.getpid())}')

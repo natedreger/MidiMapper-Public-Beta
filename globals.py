@@ -11,12 +11,11 @@ load_dotenv('.env')
 SETTINGS_FILE=os.environ.get('SETTINGS_FILE')
 VERSION=os.environ.get('VERSION')
 
-
-
 ############## GLOBAL FUNCTIONS ###############
 
 UID   = 1
 EUID  = 2
+
 
 def owner(pid):
     '''Return username of UID of process pid'''

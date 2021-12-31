@@ -3,7 +3,7 @@
 import json
 import os
 
-from logger import *
+from modules.logger import *
 from globals import *
 
 def listKeyMaps():

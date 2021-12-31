@@ -19,11 +19,11 @@ from rtmidi import MidiIn, MidiOut
 from rtmidi.midiutil import open_midioutput, open_midiinput
 
 ### Local Modules
-from midioutwrapper import MidiOutWrapper
-from probe_ports import probe_ports, getAvailableIO
-from logger import *
+from modules.midioutwrapper import MidiOutWrapper
+from modules.probe_ports import probe_ports, getAvailableIO
+from modules.logger import *
+from modules.keymap import getMappedKeys, searchKeyMap
 from globals import owner, connectSocket
-from keymap import getMappedKeys, searchKeyMap
 
 keyMapFile = 'default.json'
 settingsFile = 'settings.json'

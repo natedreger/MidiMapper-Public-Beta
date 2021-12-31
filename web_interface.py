@@ -11,9 +11,10 @@ from flask_socketio import SocketIO
 from flask import Flask, render_template, request
 import sys
 
-from logger import *
+from modules.logger import *
+from modules.keymap import *
 from globals import owner, VERSION
-from keymap import *
+
 cli = sys.modules['flask.cli']
 cli.show_server_banner = lambda *x: None
 

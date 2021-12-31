@@ -202,11 +202,10 @@
             });
 
             $("#new_keymap_file").click(function(event) {
-              let fileName = prompt("Enter Filename without extention", "newKeyMap");
+              let fileName = prompt("Enter Filename without extention", "exampleName");
               if (fileName != null) {
-                console.log(fileName)
+                socket.emit('new_keymap_file', fileName);
               }
-              socket.emit('new_keymap_file', fileName);
               return false;
             });
 

@@ -2,12 +2,13 @@ import socketio
 import os
 
 
-from logger import *
-from globals import connectSocket, owner, read_settings, SETTINGS_FILE
 from pythonosc import udp_client
 from pythonosc.dispatcher import Dispatcher
 from pythonosc.osc_server import BlockingOSCUDPServer
+
+from modules.logger import *
 from midi_mapper import q
+from globals import connectSocket, owner, read_settings, SETTINGS_FILE
 
 # dispatcher.map("/something/*", print_handler)
 # settings = read_settings(SETTINGS_FILE)
