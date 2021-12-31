@@ -84,14 +84,16 @@ def reboot():
     print('Rebooting')
     terminateProcesses()
     time.sleep(1.0)
-    os.system("sudo reboot now")
+    # os.system("shutdown /r /t 0")
+    # os.system("sudo reboot now")
 
 @sio2.on('shutdown')
-def reboot():
+def shutdown():
     print('Shutting Down')
     terminateProcesses()
     time.sleep(1.0)
-    os.system("sudo shutdown now")
+    # os.system("shutdown /s /t 0")
+    # os.system("sudo shutdown now")
 
 def load_settings():
     global settings, server_port, server_addr
