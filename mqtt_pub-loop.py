@@ -8,6 +8,8 @@ import json
 
 hostname = os.uname().nodename
 broker_address="midimapper.local"
+username = 'mqtt_user'
+password = 'Afg12e7i'
 
 client = mqtt.Client("P2") #create new instance
 
@@ -43,7 +45,7 @@ client.on_connect=on_connect
 
 ########################################
 print("connecting to broker")
-client.username_pw_set(username='test',password='test')
+client.username_pw_set(username, password)
 client.connect(broker_address) #connect to broker
 
 clientThread = threading.Thread(target=client.loop_start)
@@ -51,8 +53,8 @@ clientThread.start()
 
 i = 0
 while True:
-    topic = "TheFlanderses"
-    message = {"data":f'/app/Spotify/{i}'}
+    topic = "KampKrusty"
+    message = {"OSC":f'/app/Spotify/{i}'}
     publish(topic,json.dumps(message))
     time.sleep(5)
     i += 1

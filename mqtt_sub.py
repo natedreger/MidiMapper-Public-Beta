@@ -11,8 +11,8 @@ from collections import deque
 hostname = os.uname().nodename
 broker_address="midimapper.local"
 broker_port = 1883
-username = 'test'
-password = 'test'
+username = 'mqtt_user'
+password = 'Afg12e7i'
 jsonData = {}
 
 client = mqtt.Client(hostname) #create new instance
@@ -43,7 +43,7 @@ def on_connect(client, userdata, flags, rc):
         topic = 'connection'
         print("connected ok")
         subscribe(topic)
-        publish(topic, f'{__file__} {hostname} connected ok')
+        publish(topic, f'{hostname} connected ok')
         subscribe(hostname)
     elif rc==5:
         print("Authentication Error")

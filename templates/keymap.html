@@ -90,7 +90,6 @@
             socket.on('search_keymap_return', function(msg) {
               if (msg) {
                 keyExists = true
-                console.log(msg)
                 confirm('Note '+msg['note']+' on '+msg['input_device']+' is already mapped to '+ msg['type'])
                 $("#map_type").val(msg['type'])
                 // $('#'+$el.attr("id")+' option[value="'+activeOption+'"]').attr('selected','selected')
