@@ -12,7 +12,6 @@ import queue
 import socketio
 import gc
 import os
-
 from pythonosc import udp_client
 
 from rtmidi import MidiIn, MidiOut
@@ -23,7 +22,7 @@ from modules.midioutwrapper import MidiOutWrapper
 from modules.probe_ports import probe_ports, getAvailableIO
 from modules.logger import *
 from modules.keymap import getMappedKeys, searchKeyMap
-from globals import owner, connectSocket
+from globals import owner, connectSocket, publishQueue
 
 keyMapFile = 'default.json'
 settingsFile = 'settings.json'
@@ -367,14 +366,18 @@ class MidiMessage:
         self.note=self.midi[1]
         self.velocity=self.midi[2]
         if self.channel > 16 and self.channel < 100:
-            if self.channel == 33 and self.note == 64:
-                self.message_type = 'sustain'
+            if self.channel == 33 and self.note == 64 and self.velocity == 127:
+                self.message_type = 'sustain_on'
+            elif self.channel == 33 and self.note == 64 and self.velocity == 0:
+                self.message_type = 'sustain_off'
             elif self.note == 7:
                 self.message_type = 'volume'
             elif self.channel == 81:
                 self.message_type = 'pitch_bend'
-            elif self.channel == 33 and self.note == 1:
-                self.message_type = 'modulation'
+            elif self.channel == 33 and self.note == 1 and self.velocity > 0:
+                self.message_type = 'modulation_on'
+            elif self.channel == 33 and self.note == 1 and self.velocity == 0:
+                self.message_type = 'modulation_off'
             else:
                 self.message_type = 'control'
         elif self.channel < 0:
@@ -387,6 +390,7 @@ class MidiMessage:
             self.message_type = 'note_off'
         else:
             self.message_type = 'note_on'
+        publishQueue.put(['MIDI',str(self.message_type)])
 
 class MidiInput:
     def handle_midi_in(self, event, data):
@@ -424,7 +428,6 @@ def midi_main(settings_file):
 
     # main program
     print("Entering MIDI loop. ")
-
     try:
         try:
             while True:
@@ -434,7 +437,7 @@ def midi_main(settings_file):
                     if msg:
                         filter = ('All' in filterInput) or (msg.indevice in filterInput)
                         if msg.velocity > 0 and filter and msg.message_type == 'note_on' and msg.channel > 0:
-                            sio.emit('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi}})
+                            sio.emit('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi, 'message_type':msg.message_type}})
                             remap = searchKeyMap(mappedkeys, msg.indevice, msg.note, settings['match_device'] == 'True')
 
                             if remap and remap['type']=="OSC":
@@ -445,6 +448,15 @@ def midi_main(settings_file):
                                     sio.emit('midi_sent', {'data': f"Mapped to OSC message {remap['message']}"})
                                 except Exception as err:
                                     sio.emit('client_msg', f"Error: {remap['host']}:{remap['port']} {err}")
+
+                            if remap and remap['type']=="MQTT":
+                                try:
+                                    publishQueue.put([remap['topic'], remap['message']])
+                                    print(f"MQTT topic {remap['topic']} message {remap['message']}")
+                                    sio.emit('midi_sent', {'data': f"Mapped to MQTT topic {remap['topic']} message {remap['message']}"})
+                                except Exception as err:
+                                    sio.emit('client_msg', f"Error publishing {err}")
+
                             if activeOutput != 'None':
                                 # print(settings['match_device'] == 'True')
                                 if remap:

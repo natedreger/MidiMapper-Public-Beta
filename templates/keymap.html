@@ -15,6 +15,8 @@
           $("#osc").css("display", "none");
           $("#osc_host").css("display", "none");
           $("#osc_port").css("display", "none");
+          $("#mqtt_topic").css("display", "none");
+          $("#mqtt_message").css("display", "none");
         }
 
         function show_fields(type) {
@@ -33,6 +35,10 @@
               $("#osc_host").css("display", "block");
               $("#osc_port").css("display", "block");
               break
+            case 'MQTT':
+              $("#mqtt").css("display", "block");
+              $("#mqtt_topic").css("display", "block");
+              $("#mqtt_message").css("display", "block");
           }
         }
 
@@ -44,6 +50,8 @@
           $("#map_osc").val('')
           $("#osc_host").val('')
           $("#osc_port").val('')
+          $("#mqtt_message").val('')
+          $("#mqtt_topic").val('')
         }
 
         $(document).ready(function() {
@@ -72,6 +80,7 @@
             // section of the page.
             socket.on('midi_msg', function(msg, cb) {
                 $('#log').prepend('<br>' + $('<div/>').text('Midi Received: ' + msg.data['device']+': ['+msg.data['midi']+']').html());
+                console.log(msg.data)
                 if (mode == "edit") {
                   if (msg.data['midi'][2] > 0) {
                     mapDevice = msg.data['device']
@@ -105,6 +114,10 @@
                     $("#map_osc").val(msg['message'])
                     $("#osc_host").val(msg['host'])
                     $("#osc_port").val(msg['port'])
+                  case 'MQTT':
+                    $("#mqtt_topic").val(msg['topic'])
+                    $("#mqtt_message").val(msg['message'])
+
                 }
               }
             })
@@ -230,6 +243,9 @@
                     new_mapping['host'] = $("#osc_host").val()
                     new_mapping['port'] = parseInt($("#osc_port").val())
                     break
+                  case 'MQTT':
+                    new_mapping['topic'] = $("#mqtt_topic").val()
+                    new_mapping['message'] = $("#mqtt_message").val()
                 }
 
                 new_mapping['output_device'] = 'Any'
@@ -320,6 +336,7 @@
           <option value="NOTE_ON">NOTE_ON</option>
           <option value="PROGRAM_CHANGE">PROGRAM_CHANGE</option>
           <option value="OSC">OSC</option>
+          <option value="MQTT">MQTT</option>
         </select>
         <div id="channel" style="display:none">
           <label for="map_channel">Channel:</label>
@@ -344,6 +361,12 @@
           <input type="text" id="osc_host" name="osc_host"><br>
           <label for="osc_port">OSC Port:</label>
           <input type="text" id="osc_port" name="osc_port">
+        </div>
+        <div id="mqtt" style="display:none">
+          <label for="mqtt_topic">Topic:</label>
+          <input type="text" id="mqtt_topic" name="mqtt_topic"><br>
+          <label for="mqtt_message">Message:</label>
+          <input type="text" id="mqtt_message" name="mqtt_message"><br>
         </div>
       </p>
       <input type="button" id="save_keymap" value="Save">

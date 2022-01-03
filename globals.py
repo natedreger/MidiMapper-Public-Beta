@@ -3,13 +3,15 @@ import sys
 import os
 import json
 from dotenv import load_dotenv
-
+from multiprocessing import Queue
 
 ####### GLOBAL CONSTANTS ############
 sys.path.insert(0, os.path.dirname(__file__))
 load_dotenv('.env')
 SETTINGS_FILE=os.environ.get('SETTINGS_FILE')
 VERSION=os.environ.get('VERSION')
+
+publishQueue = Queue()
 
 ############## GLOBAL FUNCTIONS ###############
 
