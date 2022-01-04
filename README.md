@@ -11,6 +11,7 @@ On a more advanced level MidiMapper allows keymaps to be created allowing note o
 - MIDI NOTE_ON (with channel)
 - Program Change
 - OSC command
+- MQTT
 
 MidiMapper also contains a builtin web interface for monitoring and setup.
 
