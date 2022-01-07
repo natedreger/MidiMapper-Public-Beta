@@ -53,6 +53,7 @@ server_addr = 'localhost'
 socket_port = '5005' # default, can be overridden in settings
 
 ################ socket IO #######################3
+
 @sio.event
 def connect():
     send_settings()

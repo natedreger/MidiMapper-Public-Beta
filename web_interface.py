@@ -19,6 +19,7 @@ cli = sys.modules['flask.cli']
 cli.show_server_banner = lambda *x: None
 
 app = Flask(__name__)
+app.logger.setLevel(logging.ERROR)
 socketio = SocketIO(app)
 
 @app.route('/')
@@ -37,8 +38,12 @@ def settings():
 def keymap():
     return render_template('keymap.html', async_mode=socketio.async_mode, version=VERSION)
 
+@app.route('/sys_admin', methods=['GET'])
+def sys_admin():
+    return render_template('sys_admin.html', async_mode=socketio.async_mode, version=VERSION)
 
 ################## APP SOCKETS ################################
+
 @socketio.on('connect')
 def connect_web():
     print('[INFO] Web client connected: {}'.format(request.sid))

@@ -3,7 +3,7 @@
 BaseinputOptions = ['None', 'All', 'Web Interface', 'OSC2MIDI']
 BaseoutputOptions = ['None', 'All']
 ModeOptions = ['Thru', 'Mapped']
-
+socket = io()
 
 function build_options(element, options, activeOption) {
   var $el = element
