@@ -24,17 +24,16 @@ from modules.logger import *
 from web_interface import server_main
 from midi_mapper import midi_main, end_MIDI
 from osc import osc_main
-from globals import owner, VERSION, SETTINGS_FILE, read_settings
+from globals import owner, VERSION, SETTINGS_FILE, settingsCLASS
 from mqttPubSub import *
 
 logs.debug(f'app.py running as PID: {os.getpid()} as User: {owner(os.getpid())}')
 
 midi_processes = []
 server_processes = []
-osc_processes = []
 
-settings = read_settings(SETTINGS_FILE)#json.loads(file.read())
-server_port = settings['socket_port']
+settings = settingsCLASS.config
+server_port = settingsCLASS.socket_port
 server_addr = 'localhost'
 
 sio2 = socketio.Client()
@@ -49,9 +48,7 @@ def restart_midi():
     time.sleep(0.1)
     for midi_process in midi_processes:
         midi_process.terminate()
-        # stop(midi_process)
     midi_processes.append(Process(target=midi_main, args=(SETTINGS_FILE,)))
-    # midi_processes.append(threading.Thread(target=midi_main, args=(SETTINGS_FILE,)))
     next_midi = len(midi_processes)-1
     time.sleep(0.1)
     midi_processes[next_midi].start()
@@ -101,9 +98,8 @@ def shutdown(pwd):
 
 def load_settings():
     global settings, server_port, server_addr
-    # file = open(SETTINGS_FILE)
-    settings = read_settings(SETTINGS_FILE)#json.loads(file.read())
-    server_port = settings['socket_port']
+    settings = settingsCLASS.config
+    server_port = settingsCLASS.socket_port
     server_addr = 'localhost'
 
 def stop(self):
@@ -114,6 +110,7 @@ def terminateProcesses():
         server_process.terminate()
     for midi_process in midi_processes:
         midi_process.terminate()
+    osc_process.terminate()
     gc.collect()
 
 load_settings()
@@ -122,22 +119,15 @@ load_settings()
 midi_processes.append(Process(target=midi_main, args=(SETTINGS_FILE,)))
 server_processes.append(Process(target=server_main, args=(SETTINGS_FILE,)))
 osc_process = Process(target=osc_main, args=(settings,))
-# midi_processes.append(threading.Thread(target=midi_main, args=(SETTINGS_FILE,)))
-# server_processes.append(threading.Thread(target=server_main, args=(SETTINGS_FILE,)))
-# osc_process = threading.Thread(target=osc_main, args=(settings,))
 
 logs.info(f"{__name__} started")
 
 try:
-    # clientThread = threading.Thread(target=connectBroker)
-    # clientThread.start()
-
     osc_process.start()
     for server_process in server_processes:
         server_process.start()
     for midi_process in midi_processes:
         midi_process.start()
-
 
     connected = False
     while not connected:
@@ -150,5 +140,5 @@ try:
             print("Connected!")
             connected = True
 except:
-    terminateProcesses()
+    quit()
     print('Processes Terminated')

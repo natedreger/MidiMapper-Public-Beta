@@ -8,10 +8,8 @@ from pythonosc.osc_server import BlockingOSCUDPServer
 
 from modules.logger import *
 from midi_mapper import q
-from globals import connectSocket, owner, read_settings, SETTINGS_FILE
+from globals import connectSocket, owner, settingsCLASS
 
-# dispatcher.map("/something/*", print_handler)
-# settings = read_settings(SETTINGS_FILE)
 
 oscSocket = socketio.Client()
 
@@ -58,15 +56,18 @@ def processOSC(addr):
 dispatcher = Dispatcher()
 dispatcher.set_default_handler(osc_handler)
 
+
 def osc_main(settings):
     socket_addr = 'localhost'
-    socket_port = int(settings['socket_port'])
+    socket_port = int(settingsCLASS.socket_port)
     osc_ip = "0.0.0.0" #allow external
-    osc_port = int(settings['osc_port'])#9001
+    osc_port = int(settingsCLASS.osc_port)#9001
     logs.debug(f'osc.py running as PID: {os.getpid()} as User: {owner(os.getpid())}')
     connectSocket(oscSocket, socket_addr, socket_port)
     server = BlockingOSCUDPServer((osc_ip, osc_port), dispatcher)
+    print(f"OSC Listening on {osc_ip}:{osc_port}")
     server.serve_forever()  # Blocks forever
+    server.shutdown()
 
 if __name__ == '__main__':
     settings={}

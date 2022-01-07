@@ -22,7 +22,7 @@ from modules.midioutwrapper import MidiOutWrapper
 from modules.probe_ports import probe_ports, getAvailableIO
 from modules.logger import *
 from modules.keymap import getMappedKeys, searchKeyMap
-from globals import owner, connectSocket, publishQueue
+from globals import owner, connectSocket, publishQueue, settingsCLASS
 
 keyMapFile = 'default.json'
 settingsFile = 'settings.json'
@@ -265,30 +265,48 @@ def setInputFilter(new_inputs):
 def load_settings(settings_file):
     global settings, defaultInput, defaultOutput, filterInput, ignoreInputs, \
             ignoreOutputs, keyMapFile, socket_port, midi_mode, match_device
-    file = open(settings_file)
-    settings = json.loads(file.read())
-    file.close()
-
-    keyMapFile = settings['keymap']
-    defaultInput = settings['default_input']
-    defaultOutput = settings['default_output']
-    ignoreInputs = settings['hide_inputs']
-    ignoreOutputs = settings['hide_outputs']
-    socket_port = settings['socket_port']
-    midi_mode = settings['midi_mode']
-    match_device = settings['match_device']
+    ## ////////// REPLACE with settingsCLASS
+    # file = open(settings_file)
+    # settings = json.loads(file.read())
+    # file.close()
+    # keyMapFile = settings['keymap']
+    # defaultInput = settings['default_input']
+    # defaultOutput = settings['default_output']
+    # ignoreInputs = settings['hide_inputs']
+    # ignoreOutputs = settings['hide_outputs']
+    # socket_port = settings['socket_port']
+    # midi_mode = settings['midi_mode']
+    # match_device = settings['match_device']
+    ## \\\\\\\\\\\\\\\\\\\\\\\\\\
+    settingsCLASS.load_config()
+    settings = settingsCLASS.config
+    keyMapFile = settingsCLASS.keymap
+    defaultInput = settingsCLASS.default_input
+    defaultOutput = settingsCLASS.default_output
+    ignoreInputs = settingsCLASS.hide_inputs
+    ignoreOutputs = settingsCLASS.hide_outputs
+    socket_port = settingsCLASS.socket_port
+    midi_mode = settingsCLASS.midi_mode
+    match_device = settingsCLASS.match_device
     filterInput.clear()
     filterInput.append(defaultInput)
 
 def save_midiSetting(settings_file, new_settings):
-    settings = new_settings
-    settings['last_input'] = filterInput
-    settings['last_output'] = activeOutput
-    settings['last_keymap'] = keyMapFile
-
-    file = open(settings_file,'w')
-    file.write(json.dumps(settings))
-    file.close()
+    ## ////////// DELETE ONCE settingsCLASS is GOOD
+    # settings = new_settings
+    # settings['last_input'] = filterInput
+    # settings['last_output'] = activeOutput
+    # settings['last_keymap'] = keyMapFile
+    # file = open(settings_file,'w')
+    # file.write(json.dumps(settings))
+    # file.close()
+    ## \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+    settingsCLASS.config = new_settings
+    settingsCLASS.read_config()
+    settingsCLASS.last_input = filterInput
+    settingsCLASS.last_output = activeOutput
+    settingsCLASS.last_keymap = keyMapFile
+    settingsCLASS.write_config()
     print('MIDI Settings Saved')
 
 def end_MIDI():

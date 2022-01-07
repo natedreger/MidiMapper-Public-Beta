@@ -6,14 +6,14 @@ import paho.mqtt.client as mqtt
 
 from collections import deque
 
-from globals import publishQueue
+from globals import publishQueue, settingsCLASS
 #####################
 
 hostname = os.uname().nodename
-broker_address="midimapper.local"
-broker_port = 1883
-username = 'mqtt_user'
-password = 'Afg12e7i'
+broker_address = settingsCLASS.mqtt_broker
+broker_port = int(settingsCLASS.mqtt_port)
+username = settingsCLASS.mqtt_user
+password = settingsCLASS.mqtt_paswd
 jsonData = {}
 
 client = mqtt.Client(f'mqtt-{hostname}') #create new instance
@@ -99,7 +99,5 @@ if __name__ == '__main__':
         print(e)
     except Exception as e:
         print(e)
-
-
     time.sleep(1000) # wait
     client.loop_stop() #stop the loop

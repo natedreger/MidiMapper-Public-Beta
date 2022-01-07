@@ -23,6 +23,9 @@ Still To Do :
 - [x] Change midi mode via web interface
 - [x] Match mapping device control
 - [x] remove lag from mode change
+- [ ] encrypt passwords in settings file
+- [ ] loop connection attempts
+
 
 Known Issues to fix :
 - [ ] rescan midi I/O results in corrupt data upon next note (for now midi will be restarted)
