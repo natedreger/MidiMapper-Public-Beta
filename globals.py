@@ -38,46 +38,6 @@ def connectSocket(socketName, socket_addr, socket_port):
             print("Connected!")
             connected = True
 
-# def load_settings(settings_file):
-#     global settings, defaultInput, defaultOutput, filterInput, ignoreInputs, \
-#             ignoreOutputs, keyMapFile, socket_port, midi_mode, match_device
-#     file = open(settings_file)
-#     settings = json.loads(file.read())
-#     file.close()
-#
-#     keyMapFile = settings['keymap']
-#     defaultInput = settings['default_input']
-#     defaultOutput = settings['default_output']
-#     ignoreInputs = settings['hide_inputs']
-#     ignoreOutputs = settings['hide_outputs']
-#     socket_port = settings['socket_port']
-#     midi_mode = settings['midi_mode']
-#     match_device = settings['match_device']
-#     filterInput.clear()
-#     filterInput.append(defaultInput)
-#
-# def read_settings(settings_file):
-#     file = open(settings_file)
-#     settings = json.loads(file.read())
-#     file.close()
-#     return settings
-#
-# def save_settings(settings_file, new_settings):
-#     settings = new_settings
-#     settings['last_input'] = filterInput
-#     settings['last_output'] = activeOutput
-#     settings['last_keymap'] = keyMapFile
-#
-#     settingsCLASS.last_input = filterInput
-#     settingsCLASS.last_output = activeOutput
-#     settingsCLASS.last_keymap = keyMapFile
-#     settingsCLASS.save_settings()
-#
-#     file = open(settings_file,'w')
-#     file.write(json.dumps(settings))
-#     file.close()
-#     print('MIDI Settings Saved')
-
 class SettingsManager(object):
     def __init__(self, file):
         self.filename = file
@@ -144,8 +104,47 @@ class SettingsManager(object):
             self.config = json.load(config_file)
         self.read_config()
 
-testFile = 'test.json'
 settingsCLASS = SettingsManager(SETTINGS_FILE)
 settingsCLASS.read_config()
-settingsCLASS.write_config()
-# print(settingsCLASS.config)
+
+
+
+# def load_settings(settings_file):
+#     global settings, defaultInput, defaultOutput, filterInput, ignoreInputs, \
+#             ignoreOutputs, keyMapFile, socket_port, midi_mode, match_device
+#     file = open(settings_file)
+#     settings = json.loads(file.read())
+#     file.close()
+#
+#     keyMapFile = settings['keymap']
+#     defaultInput = settings['default_input']
+#     defaultOutput = settings['default_output']
+#     ignoreInputs = settings['hide_inputs']
+#     ignoreOutputs = settings['hide_outputs']
+#     socket_port = settings['socket_port']
+#     midi_mode = settings['midi_mode']
+#     match_device = settings['match_device']
+#     filterInput.clear()
+#     filterInput.append(defaultInput)
+#
+# def read_settings(settings_file):
+#     file = open(settings_file)
+#     settings = json.loads(file.read())
+#     file.close()
+#     return settings
+#
+# def save_settings(settings_file, new_settings):
+#     settings = new_settings
+#     settings['last_input'] = filterInput
+#     settings['last_output'] = activeOutput
+#     settings['last_keymap'] = keyMapFile
+#
+#     settingsCLASS.last_input = filterInput
+#     settingsCLASS.last_output = activeOutput
+#     settingsCLASS.last_keymap = keyMapFile
+#     settingsCLASS.save_settings()
+#
+#     file = open(settings_file,'w')
+#     file.write(json.dumps(settings))
+#     file.close()
+#     print('MIDI Settings Saved')

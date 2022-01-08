@@ -68,6 +68,8 @@ def disconnect_midi():
 @socketio.on('get_settings')
 def get_settings(data):
     load_settings(settingsFile)
+    settingsCLASS.read_config()
+    print(json.dumps(settingsCLASS.config))
     send_settings()
 
 @socketio.on('save_settings')
@@ -76,8 +78,10 @@ def save_settings(data):
     socketio.emit('save_settings',data)
 
 def send_settings():
+
     socketio.emit('settings', {'match_device':match_device,'midi_mode':midi_mode, 'availableInputs':availableInputs, 'availableOutputs':availableOutputs, \
                     'activeInput':activeInput, 'activeOutput':activeOutput, 'settings':settings, 'keymap':keymap, 'keyMapFile':keyMapFile})
+    # socketio.emit('settings', json.dumps(settingsCLASS.config))
 
 ################# forward main app to web interface #########################
 
@@ -257,25 +261,19 @@ def OSC2MIDI_out(message):
     socketio.emit('OSC2MIDI_in', message)
 
 ################ Main Functions ###################################
-
+#
 def load_settings(settings_file):
     global settings, socket_port, settingsFile
     settingsFile = settings_file
-    file = open(settings_file)
-    settings = json.loads(file.read())
-    socket_port = settings['socket_port']
-    file.close()
 
 def saveServerSettings(data, settings_file):
-    file = open(settings_file)
-    settings = json.loads(file.read())
-    settings['socket_port'] = data['socket_port']
-    # file.write(json.dumps(settings))
-    file.close()
+    settingsCLASS.socket_port = data['socket_port']
+    settingsCLASS.write_config()
     socketio.emit('my_response', {'data': 'Server Settings Saved'})
     print('Settings Saved')
 
 def server_main(settings_file):
+    socket_port = settingsCLASS.socket_port
     logs.debug(f'web_interface.py running as PID: {os.getpid()} as User: {owner(os.getpid())}')
     load_settings(settings_file)
     print('Server Main')

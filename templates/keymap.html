@@ -70,7 +70,7 @@
             // The callback function is invoked when a connection with the
             // server is established.
             socket.on('connect', function() {
-                socket.emit('get_settings', {data: 'I\'m connected!'});
+                // socket.emit('get_settings', {data: 'I\'m connected!'});
                 socket.emit('list_keymaps');
             });
 

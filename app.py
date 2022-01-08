@@ -20,11 +20,11 @@ import socketio
 import threading
 from multiprocessing import Process
 
+from globals import owner, VERSION, SETTINGS_FILE, settingsCLASS
 from modules.logger import *
 from web_interface import server_main
 from midi_mapper import midi_main, end_MIDI
 from osc import osc_main
-from globals import owner, VERSION, SETTINGS_FILE, settingsCLASS
 from mqttPubSub import *
 
 logs.debug(f'app.py running as PID: {os.getpid()} as User: {owner(os.getpid())}')
