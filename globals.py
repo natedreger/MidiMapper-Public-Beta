@@ -105,8 +105,6 @@ class SettingsManager:
 class ActiveSettings_Class:
     def __init__(self):
         self.tempFile = 'activeSettings.tmp'
-        # with open(self.tempFile, 'w') as file:
-        #     file.write('')
 
     def write(self):
         with open(self.tempFile, 'w') as file:
