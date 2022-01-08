@@ -11,3 +11,4 @@
 *.log
 /testing
 /modules/__pycache__
+*.tmp

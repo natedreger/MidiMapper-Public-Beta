@@ -154,7 +154,7 @@ def open_keymap(openMapFile):
     settings['keymap'] = openMapFile
     save_midiSetting(settingsFile, settings)
     keyMapFile = openMapFile
-    activeSettings.keyMapFile = keyMapFile
+    activeSettings.setValue('keyMapFile',keyMapFile)
     send_settings()
 
 @sio.on('set_mode')
@@ -214,7 +214,7 @@ def send_client_msg(message):
 def send_settings():
     sio.emit('setup', {'match_device':match_device, 'midi_mode':midi_mode, 'outputs':filteredOutputList, 'inputs':filteredInputList, \
             'activeOutput':activeOutput, 'activeInput':activeInput,\
-            'settings':settingsCLASS.config, 'keymap':mappedkeys, 'keyMapFile':keyMapFile})
+            'settings':settingsCLASS.config, 'keymap':mappedkeys, 'keyMapFile':keyMapFile, 'activeSettings':vars(activeSettings)})
 
 def searchIO(type, device):
     ### no problems
@@ -244,7 +244,7 @@ def searchIO(type, device):
             print(f"Output device {device} not found, setting output to None")
             portnum = 'None'
             activeOutput = 'None'
-    activeSettings.activeInput = activeInput
+    activeSettings.setValue('activeInput',activeInput)
     return portnum
 
 def setOutput(port):
@@ -257,7 +257,7 @@ def setOutput(port):
     else:
         midiout.close_port()
         activeOutput = 'None'
-    activeSettings.activeOutput = activeOutput
+    activeSettings.setValue('activeOutput',activeOutput)
 
 def setInputFilter(new_inputs):
     global filterInput, activeInput
@@ -265,6 +265,7 @@ def setInputFilter(new_inputs):
     for input in new_inputs:
         filterInput.append(input)
     activeInput = filterInput
+    activeSettings.setValue('activeInput',activeInput)
 
 def load_settings(settings_file):
     global settings, defaultInput, defaultOutput, filterInput, ignoreInputs, \
@@ -292,6 +293,9 @@ def load_settings(settings_file):
     socket_port = settingsCLASS.socket_port
     midi_mode = settingsCLASS.midi_mode
     match_device = settingsCLASS.match_device
+    activeSettings.setValue('keyMapFile', keyMapFile)
+    activeSettings.setValue('midi_mode', midi_mode)
+    activeSettings.setValue('match_device', match_device)
     filterInput.clear()
     filterInput.append(defaultInput)
 
@@ -452,8 +456,7 @@ def midi_main(settings_file):
     # main program
     print("Entering MIDI loop. ")
 
-    print(vars(activeSettings))
-    
+
     try:
         try:
             while True:

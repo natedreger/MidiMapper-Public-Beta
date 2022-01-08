@@ -13,7 +13,7 @@ import sys
 
 from modules.logger import *
 from modules.keymap import *
-from globals import owner, VERSION, activeSettings, settingsCLASS
+from globals import owner, VERSION, settingsCLASS, activeSettings
 
 cli = sys.modules['flask.cli']
 cli.show_server_banner = lambda *x: None
@@ -79,7 +79,7 @@ def save_settings(data):
 
 def send_settings():
     socketio.emit('settings', {'match_device':match_device,'midi_mode':midi_mode, 'availableInputs':availableInputs, 'availableOutputs':availableOutputs, \
-                    'activeInput':activeInput, 'activeOutput':activeOutput, 'settings':settingsCLASS.config, 'keymap':keymap, 'keyMapFile':keyMapFile})
+                    'activeInput':activeInput, 'activeOutput':activeOutput, 'settings':settingsCLASS.config, 'keymap':keymap, 'keyMapFile':keyMapFile, 'activeSettings':vars(activeSettings)})
 
 ################# forward main app to web interface #########################
 

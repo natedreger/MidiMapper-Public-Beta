@@ -104,19 +104,34 @@ class SettingsManager:
 
 class ActiveSettings_Class:
     def __init__(self):
-        self.activeInput = None
-        self.activeOutput = None
-        self.match_device = None
-        self.midi_mode = None
-        self.outputs = None
-        self.inputs = None
-        self.keymap = {}
-        self.keyMapFile = None
+        self.tempFile = 'activeSettings.tmp'
+        # with open(self.tempFile, 'w') as file:
+        #     file.write('')
+
+    def write(self):
+        with open(self.tempFile, 'w') as file:
+            json.dump(vars(self), file)
+
+    def read(self):
+        with open(self.tempFile, 'r') as file:
+            active = json.load(file)
+            for key in active:
+                setattr(self, key, active[key])
+
+    def setValue(self, key, value):
+        setattr(self, key, value)
+        self.write()
+        self.read()
 
 settingsCLASS = SettingsManager(SETTINGS_FILE)
 settingsCLASS.read_config()
 
 activeSettings = ActiveSettings_Class()
+activeSettings.read()
+
+# print(test.match_device)
+
+# activeSettings = {}
 
 # def load_settings(settings_file):
 #     global settings, defaultInput, defaultOutput, filterInput, ignoreInputs, \

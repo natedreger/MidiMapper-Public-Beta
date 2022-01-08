@@ -21,13 +21,14 @@ def loadKeyMap(keyMapFile):
         logging.error(f'Error loading keymap - {err}')
         # message_buffer.append(f'Error loading keymap - {err}')
         map = False
+    activeSettings.setValue('keyMapFile', keyMapFile)
     return map
 
 def getMappedKeys(key_map):
     global mappedkeys
     tempKeys = loadKeyMap(key_map)
     mappedkeys = tempKeys
-    activeSettings.keymap = loadKeyMap(key_map)
+    activeSettings.setValue('keymap', loadKeyMap(key_map))
     return mappedkeys
 
 def searchKeyMap(mappedkeys, device, note, exact):
