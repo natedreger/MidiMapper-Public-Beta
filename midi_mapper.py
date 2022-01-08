@@ -22,7 +22,7 @@ from modules.midioutwrapper import MidiOutWrapper
 from modules.probe_ports import probe_ports, getAvailableIO
 from modules.logger import *
 from modules.keymap import getMappedKeys, searchKeyMap
-from globals import owner, connectSocket, publishQueue, settingsCLASS
+from globals import owner, connectSocket, publishQueue, settingsCLASS, activeSettings
 
 keyMapFile = 'default.json'
 settingsFile = 'settings.json'
@@ -154,6 +154,7 @@ def open_keymap(openMapFile):
     settings['keymap'] = openMapFile
     save_midiSetting(settingsFile, settings)
     keyMapFile = openMapFile
+    activeSettings.keyMapFile = keyMapFile
     send_settings()
 
 @sio.on('set_mode')
@@ -179,6 +180,7 @@ def exact_match(message):
 @sio.on('update_settings')
 def update_settings():
     load_settings(settingsFile)
+    # settingsCLASS.load_config()
     send_settings()
 
 @sio.on('quit')
@@ -212,14 +214,14 @@ def send_client_msg(message):
 def send_settings():
     sio.emit('setup', {'match_device':match_device, 'midi_mode':midi_mode, 'outputs':filteredOutputList, 'inputs':filteredInputList, \
             'activeOutput':activeOutput, 'activeInput':activeInput,\
-            'settings':settings, 'keymap':mappedkeys, 'keyMapFile':keyMapFile})
+            'settings':settingsCLASS.config, 'keymap':mappedkeys, 'keyMapFile':keyMapFile})
 
 def searchIO(type, device):
     ### no problems
     global message_buffer, activeInput, activeOutput
     if type == 'input':
         print(f'Searching for Inputs for {device}')
-        if device == 'All':
+        if device == 'All' or 'Web Interface' or 'OSC2MIDI':
             portnum = device
             activeInput=device
         else:
@@ -242,6 +244,7 @@ def searchIO(type, device):
             print(f"Output device {device} not found, setting output to None")
             portnum = 'None'
             activeOutput = 'None'
+    activeSettings.activeInput = activeInput
     return portnum
 
 def setOutput(port):
@@ -254,6 +257,7 @@ def setOutput(port):
     else:
         midiout.close_port()
         activeOutput = 'None'
+    activeSettings.activeOutput = activeOutput
 
 def setInputFilter(new_inputs):
     global filterInput, activeInput
@@ -361,12 +365,12 @@ def scan_io(type):
         print('MIDI Ports Opened')
 
         # select default i\o if available
-        if type == 'rescan':
-            if defaultOutput in outports:
-                setOutput(searchIO('output', defaultOutput))
-            if activeOutput not in outports:
-                activeOutput = 'None'
-            searchIO('input', defaultInput)
+        # if type == 'rescan':
+        if defaultOutput in outports:
+            setOutput(searchIO('output', defaultOutput))
+        if activeOutput not in outports:
+            activeOutput = 'None'
+        searchIO('input', defaultInput)
 
     except Exception as err:
         print('Something Went Wrong')
@@ -447,6 +451,9 @@ def midi_main(settings_file):
 
     # main program
     print("Entering MIDI loop. ")
+
+    print(vars(activeSettings))
+    
     try:
         try:
             while True:

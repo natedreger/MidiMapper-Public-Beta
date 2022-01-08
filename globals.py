@@ -38,7 +38,7 @@ def connectSocket(socketName, socket_addr, socket_port):
             print("Connected!")
             connected = True
 
-class SettingsManager(object):
+class SettingsManager:
     def __init__(self, file):
         self.filename = file
         self.config = {}
@@ -69,12 +69,10 @@ class SettingsManager(object):
         self.config['mqtt_port'] = self.mqtt_port
         self.config['mqtt_user'] = self.mqtt_user
         self.config['mqtt_paswd'] = self.mqtt_paswd
-
         with open(self.filename, 'w') as config_file:
             json.dump(self.config, config_file)
         with open(self.filename, 'r') as config_file:
             self.config = json.load(config_file)
-
         print("SettingsManager: Settings Saved Successfully")
 
     def read_config(self):
@@ -95,7 +93,6 @@ class SettingsManager(object):
         self.mqtt_port = self.config['mqtt_port']
         self.mqtt_user = self.config['mqtt_user']
         self.mqtt_paswd = self.config['mqtt_paswd']
-
         print("SettingsManager: Settings Loaded Successfully")
 
     def load_config(self):
@@ -104,10 +101,22 @@ class SettingsManager(object):
             self.config = json.load(config_file)
         self.read_config()
 
+
+class ActiveSettings_Class:
+    def __init__(self):
+        self.activeInput = None
+        self.activeOutput = None
+        self.match_device = None
+        self.midi_mode = None
+        self.outputs = None
+        self.inputs = None
+        self.keymap = {}
+        self.keyMapFile = None
+
 settingsCLASS = SettingsManager(SETTINGS_FILE)
 settingsCLASS.read_config()
 
-
+activeSettings = ActiveSettings_Class()
 
 # def load_settings(settings_file):
 #     global settings, defaultInput, defaultOutput, filterInput, ignoreInputs, \

@@ -27,6 +27,7 @@ def getMappedKeys(key_map):
     global mappedkeys
     tempKeys = loadKeyMap(key_map)
     mappedkeys = tempKeys
+    activeSettings.keymap = loadKeyMap(key_map)
     return mappedkeys
 
 def searchKeyMap(mappedkeys, device, note, exact):

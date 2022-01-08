@@ -13,7 +13,7 @@ import sys
 
 from modules.logger import *
 from modules.keymap import *
-from globals import owner, VERSION
+from globals import owner, VERSION, activeSettings, settingsCLASS
 
 cli = sys.modules['flask.cli']
 cli.show_server_banner = lambda *x: None
@@ -67,9 +67,9 @@ def disconnect_midi():
 
 @socketio.on('get_settings')
 def get_settings(data):
-    load_settings(settingsFile)
-    settingsCLASS.read_config()
-    print(json.dumps(settingsCLASS.config))
+    # load_settings(settingsFile)
+    settingsCLASS.load_config()
+    # settingsCLASS.read_config()
     send_settings()
 
 @socketio.on('save_settings')
@@ -78,10 +78,8 @@ def save_settings(data):
     socketio.emit('save_settings',data)
 
 def send_settings():
-
     socketio.emit('settings', {'match_device':match_device,'midi_mode':midi_mode, 'availableInputs':availableInputs, 'availableOutputs':availableOutputs, \
-                    'activeInput':activeInput, 'activeOutput':activeOutput, 'settings':settings, 'keymap':keymap, 'keyMapFile':keyMapFile})
-    # socketio.emit('settings', json.dumps(settingsCLASS.config))
+                    'activeInput':activeInput, 'activeOutput':activeOutput, 'settings':settingsCLASS.config, 'keymap':keymap, 'keyMapFile':keyMapFile})
 
 ################# forward main app to web interface #########################
 
