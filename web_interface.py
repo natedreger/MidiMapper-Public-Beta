@@ -78,6 +78,7 @@ def save_settings(data):
     socketio.emit('save_settings',data)
 
 def send_settings():
+    activeSettings.read()
     socketio.emit('settings', {'match_device':match_device,'midi_mode':midi_mode, 'availableInputs':availableInputs, 'availableOutputs':availableOutputs, \
                     'activeInput':activeInput, 'activeOutput':activeOutput, 'settings':settingsCLASS.config, 'keymap':keymap, 'keyMapFile':keyMapFile, 'activeSettings':vars(activeSettings)})
 

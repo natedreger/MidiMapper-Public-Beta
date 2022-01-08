@@ -168,12 +168,14 @@ def set_mode(message):
     if midi_mode == 'Mapped' and not map:
         send_client_msg(f"No Keymap Loaded")
         set_mode('Thru')
+    activeSettings.setValue('midi_mode', midi_mode)
     q.put(['dummy message', [0,0,0]])
 
 @sio.on('exact_match')
 def exact_match(message):
     global match_device
     match_device = message
+    activeSettings.setValue('match_device', message)
     send_settings()
     print(f"Match device changed to: {match_device}")
 
@@ -212,6 +214,7 @@ def send_client_msg(message):
     sio.emit('client_msg', message)
 
 def send_settings():
+    activeSettings.read()
     sio.emit('setup', {'match_device':match_device, 'midi_mode':midi_mode, 'outputs':filteredOutputList, 'inputs':filteredInputList, \
             'activeOutput':activeOutput, 'activeInput':activeInput,\
             'settings':settingsCLASS.config, 'keymap':mappedkeys, 'keyMapFile':keyMapFile, 'activeSettings':vars(activeSettings)})
@@ -245,6 +248,7 @@ def searchIO(type, device):
             portnum = 'None'
             activeOutput = 'None'
     activeSettings.setValue('activeInput',activeInput)
+    activeSettings.setValue('activeOutput',activeOutput)
     return portnum
 
 def setOutput(port):

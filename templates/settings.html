@@ -70,7 +70,7 @@
             });
 
             socket.on('settings', function(msg, cb) {
-                console.log(msg)
+                console.log(msg.activeSettings)
                 availableInputs = msg.availableInputs
                 availableOutputs = msg.availableOutputs
                 activeInput = msg.activeInput
