@@ -105,6 +105,8 @@ class SettingsManager:
 class ActiveSettings_Class:
     def __init__(self):
         self.tempFile = 'activeSettings.tmp'
+        with open(self.tempFile, 'w') as file:
+            json.dump(vars(self), file)
 
     def write(self):
         with open(self.tempFile, 'w') as file:
