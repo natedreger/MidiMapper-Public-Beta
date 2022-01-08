@@ -12,3 +12,4 @@
 /testing
 /modules/__pycache__
 *.tmp
+keymap.json
