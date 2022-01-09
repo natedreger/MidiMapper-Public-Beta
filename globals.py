@@ -30,8 +30,7 @@ if osName == 'Linux':
 
 ############## GLOBAL FUNCTIONS ###############
 
-UID   = 1
-EUID  = 2
+#####  Crypto \\\\\\\\\\\\\\
 def genwrite_key():
     key = Fernet.generate_key()
     with open (path2key, 'wb') as key_file:
@@ -66,6 +65,10 @@ def checkPaswd(password):
         return [False, new]
     else: return [True]
 
+#####////////////////////////////
+
+UID   = 1
+EUID  = 2
 def owner(pid):
     '''Return username of UID of process pid'''
     for ln in open('/proc/%d/status' % pid):
@@ -84,6 +87,8 @@ def connectSocket(socketName, socket_addr, socket_port):
         else:
             print("Connected!")
             connected = True
+
+############## Classes ##########################
 
 class SettingsManager:
     def __init__(self, file):
@@ -160,6 +165,9 @@ class SettingsManager:
             self.config = json.load(config_file)
         self.read_config()
 
+settingsCLASS = SettingsManager(SETTINGS_FILE)
+settingsCLASS.read_config()
+
 
 class ActiveSettings_Class:
     def __init__(self):
@@ -181,10 +189,6 @@ class ActiveSettings_Class:
         setattr(self, key, value)
         self.write()
         self.read()
-
-settingsCLASS = SettingsManager(SETTINGS_FILE)
-settingsCLASS.read_config()
-# settingsCLASS.write_config()
 
 activeSettings = ActiveSettings_Class()
 activeSettings.read()

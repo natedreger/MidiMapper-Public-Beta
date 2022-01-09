@@ -52,6 +52,95 @@ sio = socketio.Client()
 server_addr = 'localhost'
 socket_port = '5005' # default, can be overridden in settings
 
+########## Classes #############
+
+# rtmidi
+class MidiInput:
+    def handle_midi_in(self, event, data):
+        message, deltatime = event
+        m = MidiMessage([self.device, message])
+        q.put(m)
+        # q.put([self.device, message])
+
+    def close_MidiInput(self):
+        self.mi.close_port()
+
+    def delete_MidiInput(self):
+        self.mi.delete()
+
+    def __init__(self, pn, q):
+        self.pn=pn
+        self.q = q
+        self.mi = open_midiinput(pn)
+        self.mi = self.mi[0]
+        self.mi.ignore_types(sysex=False, timing=True, active_sense=True)
+        self.device = self.mi.get_port_name(pn, encoding=u'auto').split(':')[0]
+        self.mi.set_callback(self.handle_midi_in)
+
+#
+class MidiMessage:
+    def __init__(self, message, *type):
+        self.indevice=message[0]
+        # may need device maps to define channel numbers
+        self.midi=message[1]
+        self.channel=self.midi[0]-143
+        self.note=self.midi[1]
+        self.velocity=self.midi[2]
+        if self.channel > 16 and self.channel < 100:
+            if self.channel == 33 and self.note == 64 and self.velocity == 127:
+                self.message_type = 'sustain_on'
+            elif self.channel == 33 and self.note == 64 and self.velocity == 0:
+                self.message_type = 'sustain_off'
+            elif self.note == 7:
+                self.message_type = 'volume'
+            elif self.channel == 81:
+                self.message_type = 'pitch_bend'
+            elif self.channel == 33 and self.note == 1 and self.velocity > 0:
+                self.message_type = 'modulation_on'
+            elif self.channel == 33 and self.note == 1 and self.velocity == 0:
+                self.message_type = 'modulation_off'
+            else:
+                self.message_type = 'control'
+        elif self.channel < 0:
+            self.channel = self.channel+16
+            self.message_type = 'note_off'
+        elif self.velocity == 0:
+            self.message_type = 'note_off'
+        else:
+            self.message_type = 'note_on'
+        if type:
+            self.message_type = type[0]
+        publishQueue.put(['MIDI',str(self.message_type)])
+
+class webMidiNote(MidiMessage):
+    def __init__(self, message):
+        indevice = 'Web Interface'
+        ch = int(message[0])+143
+        note = int(message[1])
+        vel = 127
+        super().__init__([indevice, [ch, note, vel]])
+    pass
+
+class oscMidiNote(MidiMessage):
+    def __init__(self, message):
+        print(message)
+        indevice = message[0]
+        ch = message[1][0]+143
+        note = message[1][1]
+        message_type = message[2]
+        if message_type == 'PROGRAM_CHANGE':
+            super().__init__([indevice, [ch, note, 127]], 'program_change')
+        elif message_type == 'NOTE_ON':
+            super().__init__([indevice, [ch, note, 127]])
+
+class webPCNote(MidiMessage):
+    def __init__(self, message):
+        indevice = 'Web Interface'
+        ch = int(message[0])+143
+        pc = int(message[1])
+        super().__init__([indevice, [ch, pc, 127]], 'program_change')
+
+
 ################ socket IO #######################3
 
 @sio.event
@@ -76,19 +165,16 @@ def handle_server_message(message):
 
 @sio.on('webMidiNoteIn')
 def webMidiNoteIn(message):
-    ch = int(message['data'][0])+143
-    note = int(message['data'][1])
-    indevice = 'Web Interface'
+    wm = webMidiNote(message['data'])
     filter = ('All' in filterInput) or (indevice in filterInput)
     if filter:
-        # q.put(['Web Interface', [ch, note, 1]])
-        q.put(MidiMessage(['Web Interface', [ch, note, 1]]))
-        sio.emit('midi_sent', {'data': f'MIDI channel: {ch} value: {note}'})
+        q.put(wm)
     else:
         send_ignore(indevice)
 
 @sio.on('OSC2MIDI_in')
 def OSC2MIDI_in(message):
+    #build class for this
     indevice = message[0]
     ch = message[1][0]
     note = message[1][1]
@@ -96,26 +182,32 @@ def OSC2MIDI_in(message):
     filter = ('All' in filterInput) or (indevice in filterInput)
     if filter:
         if message_type == 'NOTE_ON':
-            q.put([indevice, message[1]])
+            # q.put([indevice, message[1]])
+            q.put(MidiMessage([indevice, message[1]]))
             # sio.emit('midi_sent', {'data': f'NOTE_ON channel: {ch} value: {note}'})
         elif message_type == 'PROGRAM_CHANGE':
             message[1][0] = ch * 100 #setting a flag for MidiMessage
-            q.put([indevice, message[1]])
+            # q.put([indevice, message[1]])
+            q.put(MidiMessage([indevice, message[1]]))
             # sio.emit('midi_sent', {'data': f'PROGRAM_CHANGE channel: {ch} value: {note}'})
     else:
         send_ignore(indevice)
 
 @sio.on('webPCIn')
 def webPCIn(message):
+    #build class for this
     ch = int(message['data'][0])
     pc = int(message['data'][1])
     indevice = 'Web Interface'
+    wpc = webPCNote(message['data'])
     filter = ('All' in filterInput) or (indevice in filterInput)
     if filter:
-        mw = MidiOutWrapper(midiout, ch=ch)
-        mw.send_program_change(pc)
-        print(f'PC sent channel: {ch} value: {pc}')
-        sio.emit('midi_sent', {'data': f'PC channel: {ch} value: {pc}'})
+        print(wpc.message_type)
+        q.put(wpc)
+        # mw = MidiOutWrapper(midiout, ch=ch)
+        # mw.send_program_change(pc)
+        # print(f'PC sent channel: {ch} value: {pc}')
+        # sio.emit('midi_sent', {'data': f'PC channel: {ch} value: {pc}'})
     else:
         send_ignore(indevice)
 
@@ -170,7 +262,8 @@ def set_mode(message):
         set_mode('Thru')
     activeSettings.setValue('midi_mode', midi_mode)
     send_settings()
-    # q.put(['dummy message', [0,0,0]])
+    # might still need dummy note
+    q.put(MidiMessage(['dummy message', [0,0,0]]))
 
 @sio.on('exact_match')
 def exact_match(message):
@@ -203,6 +296,10 @@ def apply_settings():
 def restart_midi():
     # sio.disconnect()
     print('MIDI Restarted')
+
+
+##################### Functions
+
 
 def send_ignore(indevice):
     sio.emit('client_msg', f"Message from {indevice} Ignored, outside of filter")
@@ -363,69 +460,15 @@ def scan_io(type):
         # end_MIDI()
         print("Exit.")
 
-class MidiMessage:
-    def __init__(self, message):
-        self.indevice=message[0]
-        # may need device maps to define channel numbers
-        self.midi=message[1]
-        self.channel=self.midi[0]-143
-        self.note=self.midi[1]
-        self.velocity=self.midi[2]
-        if self.channel > 16 and self.channel < 100:
-            if self.channel == 33 and self.note == 64 and self.velocity == 127:
-                self.message_type = 'sustain_on'
-            elif self.channel == 33 and self.note == 64 and self.velocity == 0:
-                self.message_type = 'sustain_off'
-            elif self.note == 7:
-                self.message_type = 'volume'
-            elif self.channel == 81:
-                self.message_type = 'pitch_bend'
-            elif self.channel == 33 and self.note == 1 and self.velocity > 0:
-                self.message_type = 'modulation_on'
-            elif self.channel == 33 and self.note == 1 and self.velocity == 0:
-                self.message_type = 'modulation_off'
-            else:
-                self.message_type = 'control'
-        elif self.channel < 0:
-            self.channel = self.channel+16
-            self.message_type = 'note_off'
-        elif self.channel > 1000:
-            self.channel = self.channel/100
-            self.message_type = 'program_change'
-        elif self.velocity == 0:
-            self.message_type = 'note_off'
-        else:
-            self.message_type = 'note_on'
-        publishQueue.put(['MIDI',str(self.message_type)])
 
-class MidiInput:
-    def handle_midi_in(self, event, data):
-        message, deltatime = event
-        m = MidiMessage([self.device, message])
-        q.put(m)
-        # q.put([self.device, message])
+############### Main
 
-    def close_MidiInput(self):
-        self.mi.close_port()
-
-    def delete_MidiInput(self):
-        self.mi.delete()
-
-    def __init__(self, pn, q):
-        self.pn=pn
-        self.q = q
-        self.mi = open_midiinput(pn)
-        self.mi = self.mi[0]
-        self.mi.ignore_types(sysex=False, timing=True, active_sense=True)
-        self.device = self.mi.get_port_name(pn, encoding=u'auto').split(':')[0]
-        self.mi.set_callback(self.handle_midi_in)
-
-
-def midi_main(settings_file):
+def midi_main():
     logs.debug(f'midi_mapper.py running as PID: {os.getpid()} as User: {owner(os.getpid())}')
     global settingsFile, midi_mode, mappedkeys
     logs.info(f"{ __name__} started")
-    settingsFile = settings_file
+    settingsFile = ''
+    settings_file = ''
     load_settings(settingsFile)
     mappedkeys = getMappedKeys(keyMapFile)
     scan_io('initial')
@@ -515,6 +558,11 @@ def midi_main(settings_file):
                             mw.send_control_change(64, msg.velocity, ch=msg.channel)
                             print(f"Sent sustain on Channel: {msg.channel}")
                             sio.emit('midi_sent', {'data': f"Sent sustain on Channel: {msg.channel}"})
+                        elif msg.message_type == 'program_change':
+                            mw = MidiOutWrapper(midiout, ch=msg.channel)
+                            mw.send_program_change(msg.note)
+                            print(f"PC sent channel: {msg.channel} value: {msg.note}")
+                            sio.emit('midi_sent', {'data': f"Mapped to PC channel: {msg.channel} value: {msg.note}"})
                         else:
                             print(msg.message_type)
 
@@ -528,3 +576,6 @@ def midi_main(settings_file):
         end_MIDI()
         logs.info(f"{ __name__} - MIDI Ended - {err} ")
         print('Exiting')
+
+if __name__ == '__main__':
+    midi_main()

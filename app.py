@@ -48,7 +48,7 @@ def restart_midi():
     time.sleep(0.1)
     for midi_process in midi_processes:
         midi_process.terminate()
-    midi_processes.append(Process(target=midi_main, args=(SETTINGS_FILE,)))
+    midi_processes.append(Process(target=midi_main))
     next_midi = len(midi_processes)-1
     time.sleep(0.1)
     midi_processes[next_midi].start()
@@ -116,7 +116,7 @@ def terminateProcesses():
 load_settings()
 
 # Create initial MIDI and server processes
-midi_processes.append(Process(target=midi_main, args=(SETTINGS_FILE,)))
+midi_processes.append(Process(target=midi_main,))
 server_processes.append(Process(target=server_main, args=(SETTINGS_FILE,)))
 osc_process = Process(target=osc_main, args=(settings,))
 
