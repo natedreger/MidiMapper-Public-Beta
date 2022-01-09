@@ -6,7 +6,7 @@ import paho.mqtt.client as mqtt
 
 from collections import deque
 
-from globals import publishQueue, settingsCLASS
+from globals import publishQueue, settingsCLASS, checkPaswd, decrypt
 #####################
 
 hostname = os.uname().nodename
@@ -14,6 +14,11 @@ broker_address = settingsCLASS.mqtt_broker
 broker_port = int(settingsCLASS.mqtt_port)
 username = settingsCLASS.mqtt_user
 password = settingsCLASS.mqtt_paswd
+encryptedPwd = checkPaswd(password)
+# if the password is encrypted
+if encryptedPwd[0]:
+    password = decrypt(password.encode())
+
 jsonData = {}
 
 client = mqtt.Client(f'mqtt-{hostname}') #create new instance

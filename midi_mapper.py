@@ -81,7 +81,8 @@ def webMidiNoteIn(message):
     indevice = 'Web Interface'
     filter = ('All' in filterInput) or (indevice in filterInput)
     if filter:
-        q.put(['Web Interface', [ch, note, 1]])
+        # q.put(['Web Interface', [ch, note, 1]])
+        q.put(MidiMessage(['Web Interface', [ch, note, 1]]))
         sio.emit('midi_sent', {'data': f'MIDI channel: {ch} value: {note}'})
     else:
         send_ignore(indevice)
@@ -161,7 +162,6 @@ def open_keymap(openMapFile):
 def set_mode(message):
     global midi_mode
     midi_mode = message
-    send_settings()
     print(f"MIDI Mode changed to: {midi_mode}")
     logs.info(f"MIDI Mode changed to: {midi_mode}")
     send_client_msg(f"MIDI Mode changed to: {midi_mode}")
@@ -169,7 +169,8 @@ def set_mode(message):
         send_client_msg(f"No Keymap Loaded")
         set_mode('Thru')
     activeSettings.setValue('midi_mode', midi_mode)
-    q.put(['dummy message', [0,0,0]])
+    send_settings()
+    # q.put(['dummy message', [0,0,0]])
 
 @sio.on('exact_match')
 def exact_match(message):
@@ -182,7 +183,6 @@ def exact_match(message):
 @sio.on('update_settings')
 def update_settings():
     load_settings(settingsFile)
-    # settingsCLASS.load_config()
     send_settings()
 
 @sio.on('quit')
@@ -198,9 +198,6 @@ def save_settings(settings):
 def apply_settings():
     # temp workaround for rescan not working
     sio.emit('restart_midi')
-    # load_settings(settingsFile)
-    # scan_io('rescan')
-    # send_settings()
 
 @sio.on('restart_midi')
 def restart_midi():
@@ -220,7 +217,6 @@ def send_settings():
             'settings':settingsCLASS.config, 'keymap':mappedkeys, 'keyMapFile':keyMapFile, 'activeSettings':vars(activeSettings)})
 
 def searchIO(type, device):
-    ### no problems
     global message_buffer, activeInput, activeOutput
     if type == 'input':
         print(f'Searching for Inputs for {device}')
@@ -274,19 +270,7 @@ def setInputFilter(new_inputs):
 def load_settings(settings_file):
     global settings, defaultInput, defaultOutput, filterInput, ignoreInputs, \
             ignoreOutputs, keyMapFile, socket_port, midi_mode, match_device
-    ## ////////// REPLACE with settingsCLASS
-    # file = open(settings_file)
-    # settings = json.loads(file.read())
-    # file.close()
-    # keyMapFile = settings['keymap']
-    # defaultInput = settings['default_input']
-    # defaultOutput = settings['default_output']
-    # ignoreInputs = settings['hide_inputs']
-    # ignoreOutputs = settings['hide_outputs']
-    # socket_port = settings['socket_port']
-    # midi_mode = settings['midi_mode']
-    # match_device = settings['match_device']
-    ## \\\\\\\\\\\\\\\\\\\\\\\\\\
+
     settingsCLASS.load_config()
     settings = settingsCLASS.config
     keyMapFile = settingsCLASS.keymap
@@ -304,15 +288,7 @@ def load_settings(settings_file):
     filterInput.append(defaultInput)
 
 def save_midiSetting(settings_file, new_settings):
-    ## ////////// DELETE ONCE settingsCLASS is GOOD
-    # settings = new_settings
-    # settings['last_input'] = filterInput
-    # settings['last_output'] = activeOutput
-    # settings['last_keymap'] = keyMapFile
-    # file = open(settings_file,'w')
-    # file.write(json.dumps(settings))
-    # file.close()
-    ## \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
     settingsCLASS.config = new_settings
     settingsCLASS.read_config()
     settingsCLASS.last_input = filterInput
@@ -373,7 +349,6 @@ def scan_io(type):
         print('MIDI Ports Opened')
 
         # select default i\o if available
-        # if type == 'rescan':
         if defaultOutput in outports:
             setOutput(searchIO('output', defaultOutput))
         if activeOutput not in outports:
@@ -426,7 +401,9 @@ class MidiMessage:
 class MidiInput:
     def handle_midi_in(self, event, data):
         message, deltatime = event
-        q.put([self.device, message])
+        m = MidiMessage([self.device, message])
+        q.put(m)
+        # q.put([self.device, message])
 
     def close_MidiInput(self):
         self.mi.close_port()
@@ -466,7 +443,8 @@ def midi_main(settings_file):
             while True:
                 timer = time.time()
                 while midi_mode == 'Mapped':
-                    msg = MidiMessage(q.get(1))
+                    # msg = MidiMessage(q.get(1))
+                    msg = q.get(1)
                     if msg:
                         filter = ('All' in filterInput) or (msg.indevice in filterInput)
                         if msg.velocity > 0 and filter and msg.message_type == 'note_on' and msg.channel > 0:
@@ -511,8 +489,6 @@ def midi_main(settings_file):
                                     print(f"No mapping for note {msg.note} on {msg.indevice} found")
                                     print(f"Sent {msg.note}")
                                     sio.emit('midi_sent', {'data': f"Channel: {msg.channel} Note: {msg.note}"})
-                                    # time.sleep(0.1)
-                                    # mw.send_note_off(msg.note)
                                 time.sleep(0.1)
                         elif (msg.velocity > 0) and (not filter) and (not 'None' in filterInput):
                             print(filterInput)
@@ -520,7 +496,8 @@ def midi_main(settings_file):
                 time.sleep(0.01)
 
                 while midi_mode == 'Thru':
-                    msg = MidiMessage(q.get(1))
+                    # msg = MidiMessage(q.get(1))
+                    msg = q.get(1)
                     filter = ('All' in filterInput) or (msg.indevice in filterInput)
                     if filter and msg.channel > 0:
                         sio.emit('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi}})

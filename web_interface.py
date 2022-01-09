@@ -67,9 +67,7 @@ def disconnect_midi():
 
 @socketio.on('get_settings')
 def get_settings(data):
-    # load_settings(settingsFile)
     settingsCLASS.load_config()
-    # settingsCLASS.read_config()
     send_settings()
 
 @socketio.on('save_settings')

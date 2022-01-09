@@ -2,8 +2,14 @@ import pwd
 import sys
 import os
 import json
+import getpass
+import platform
 from dotenv import load_dotenv
 from multiprocessing import Queue
+from cryptography.fernet import Fernet
+
+###### Local Modules #####
+
 
 ####### GLOBAL CONSTANTS ############
 sys.path.insert(0, os.path.dirname(__file__))
@@ -11,13 +17,54 @@ load_dotenv('.env')
 SETTINGS_FILE=os.environ.get('SETTINGS_FILE')
 VERSION=os.environ.get('VERSION')
 
+osName = platform.system()
+appDir = os.getcwd()
+path = appDir.split("/")
+user = getpass.getuser()
+
 publishQueue = Queue()
+
+if osName == 'Linux':
+    path2config = appDir
+    path2key = f'/home/{user}/.ssh/midiMapper.key'
 
 ############## GLOBAL FUNCTIONS ###############
 
 UID   = 1
 EUID  = 2
+def genwrite_key():
+    key = Fernet.generate_key()
+    with open (path2key, 'wb') as key_file:
+        key_file.write(key)
 
+def call_key():
+    try:
+        return open(path2key, 'rb').read()
+    except FileNotFoundError as err:
+        genwrite_key()
+
+def encrypt(data):
+    # get the key and generate if not found
+    key = call_key()
+    while not key:
+        genwrite_key()
+        key = call_key()
+    a = Fernet(key)
+    encryptedData = a.encrypt(data.encode())
+    return encryptedData
+
+def decrypt(data):
+    key = call_key()
+    a = Fernet(key)
+    decryptedData = a.decrypt(data)
+    return decryptedData.decode('utf-8')
+
+def checkPaswd(password):
+    # assume any password under 50 characters is in plaintext and encrypt
+    if len(password) in range(1,51):
+        new = encrypt(password)
+        return [False, new]
+    else: return [True]
 
 def owner(pid):
     '''Return username of UID of process pid'''
@@ -42,7 +89,6 @@ class SettingsManager:
     def __init__(self, file):
         self.filename = file
         self.config = {}
-        print("DatMan: Init")
 
         try:
             with open(self.filename) as config:
@@ -68,7 +114,13 @@ class SettingsManager:
         self.config['mqtt_broker'] = self.mqtt_broker
         self.config['mqtt_port'] = self.mqtt_port
         self.config['mqtt_user'] = self.mqtt_user
+        # self.config['mqtt_paswd'] = self.mqtt_paswd
+        encryptedPwd = checkPaswd(self.mqtt_paswd)
+        # if the password was not encrpyted get the encypted one and store it
+        if not encryptedPwd[0]:
+            self.mqtt_paswd = encryptedPwd[1].decode('utf-8')
         self.config['mqtt_paswd'] = self.mqtt_paswd
+
         with open(self.filename, 'w') as config_file:
             json.dump(self.config, config_file)
         with open(self.filename, 'r') as config_file:
@@ -92,7 +144,14 @@ class SettingsManager:
         self.mqtt_broker = self.config['mqtt_broker']
         self.mqtt_port = self.config['mqtt_port']
         self.mqtt_user = self.config['mqtt_user']
-        self.mqtt_paswd = self.config['mqtt_paswd']
+        # self.mqtt_paswd = self.config['mqtt_paswd']
+        encryptedPwd = checkPaswd(self.config['mqtt_paswd'])
+        # if the password was not encrpyted get the encypted one and store it
+        if not encryptedPwd[0]:
+            self.mqtt_paswd = encryptedPwd[1].decode('utf-8')
+            self.write_config()
+        else:
+            self.mqtt_paswd = self.config['mqtt_paswd']
         print("SettingsManager: Settings Loaded Successfully")
 
     def load_config(self):
@@ -125,6 +184,7 @@ class ActiveSettings_Class:
 
 settingsCLASS = SettingsManager(SETTINGS_FILE)
 settingsCLASS.read_config()
+# settingsCLASS.write_config()
 
 activeSettings = ActiveSettings_Class()
 activeSettings.read()
