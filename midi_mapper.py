@@ -190,12 +190,7 @@ def webPCIn(message):
     wpc = webPCNote(message['data'])
     filter = ('All' in filterInput) or (indevice in filterInput)
     if filter:
-        print(wpc.message_type)
         q.put(wpc)
-        # mw = MidiOutWrapper(midiout, ch=ch)
-        # mw.send_program_change(pc)
-        # print(f'PC sent channel: {ch} value: {pc}')
-        # sio.emit('midi_sent', {'data': f'PC channel: {ch} value: {pc}'})
     else:
         send_ignore(indevice)
 
@@ -250,7 +245,6 @@ def set_mode(message):
         set_mode('Thru')
     activeSettings.setValue('midi_mode', midi_mode)
     send_settings()
-    # might still need dummy note
     q.put(MidiMessage(['dummy message', [0,0,0]]))
 
 @sio.on('exact_match')
