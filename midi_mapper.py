@@ -80,13 +80,14 @@ class MidiInput:
 #
 class MidiMessage:
     def __init__(self, message, *type):
+        ch_offset = 143
         self.indevice=message[0]
         # may need device maps to define channel numbers
         self.midi=message[1]
-        self.channel=self.midi[0]-143
+        self.channel=self.midi[0]-ch_offset
         self.note=self.midi[1]
         self.velocity=self.midi[2]
-        if self.channel > 16 and self.channel < 100:
+        if self.channel > 16:
             if self.channel == 33 and self.note == 64 and self.velocity == 127:
                 self.message_type = 'sustain_on'
             elif self.channel == 33 and self.note == 64 and self.velocity == 0:
@@ -123,15 +124,14 @@ class webMidiNote(MidiMessage):
 
 class oscMidiNote(MidiMessage):
     def __init__(self, message):
-        print(message)
-        indevice = message[0]
-        ch = message[1][0]+143
-        note = message[1][1]
-        message_type = message[2]
-        if message_type == 'PROGRAM_CHANGE':
-            super().__init__([indevice, [ch, note, 127]], 'program_change')
-        elif message_type == 'NOTE_ON':
-            super().__init__([indevice, [ch, note, 127]])
+        indevice = 'OSC2MIDI'
+        message_type = message[0]
+        ch = int(message[1])+143
+        note = int(message[2])
+        try: vel = int(message[3])
+        except: vel = 1
+        super().__init__([indevice, [ch, note, vel]], message_type)
+
 
 class webPCNote(MidiMessage):
     def __init__(self, message):
@@ -174,22 +174,10 @@ def webMidiNoteIn(message):
 
 @sio.on('OSC2MIDI_in')
 def OSC2MIDI_in(message):
-    #build class for this
-    indevice = message[0]
-    ch = message[1][0]
-    note = message[1][1]
-    message_type = message[2]
+    oscMid = oscMidiNote(message)
     filter = ('All' in filterInput) or (indevice in filterInput)
     if filter:
-        if message_type == 'NOTE_ON':
-            # q.put([indevice, message[1]])
-            q.put(MidiMessage([indevice, message[1]]))
-            # sio.emit('midi_sent', {'data': f'NOTE_ON channel: {ch} value: {note}'})
-        elif message_type == 'PROGRAM_CHANGE':
-            message[1][0] = ch * 100 #setting a flag for MidiMessage
-            # q.put([indevice, message[1]])
-            q.put(MidiMessage([indevice, message[1]]))
-            # sio.emit('midi_sent', {'data': f'PROGRAM_CHANGE channel: {ch} value: {note}'})
+        q.put(oscMid)
     else:
         send_ignore(indevice)
 
@@ -543,7 +531,7 @@ def midi_main():
                     msg = q.get(1)
                     filter = ('All' in filterInput) or (msg.indevice in filterInput)
                     if filter and msg.channel > 0:
-                        sio.emit('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi}})
+                        sio.emit('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi, 'message_type':msg.message_type}})
                         # sio.emit('midi_msg', {'data': f'{msg.indevice} : {msg.midi}'})
                         if msg.message_type == 'note_on':
                             mw = MidiOutWrapper(midiout, ch=msg.channel)

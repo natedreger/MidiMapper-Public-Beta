@@ -26,7 +26,7 @@
             // to the client. The data is then displayed in the "Received"
             // section of the page.
             socket.on('midi_msg', function(msg, cb) {
-                $('#log').prepend('<br>' + $('<div/>').text('Midi Received: ' + msg.data['device']+': ['+msg.data['midi']+']').html());
+                $('#log').prepend('<br>' + $('<div/>').text('Midi Received: ' + msg.data['device']+ ' ' + msg.data['message_type'] + ': ['+msg.data['midi']+']').html());
                 if (cb)
                     cb();
             });

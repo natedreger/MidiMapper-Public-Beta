@@ -49,3 +49,9 @@ Built using :
 - requests==2.22.0
 - simple-websocket==0.5.0
 - websocket-client==1.2.3
+
+
+OSC input examples:
+- /MIDI/note_on/1/55/127
+- /MIDI/program_change/2/17
+- /OSC/host_machine.local/8000/Qlab/go

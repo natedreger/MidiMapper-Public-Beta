@@ -20,7 +20,8 @@ def osc_handler(address, *args):
 
 
 def parseOSC(address, *args):
-    # address = '/MIDI/NOTE_ON/1/55'
+    # address = '/MIDI/note_on/1/55/127'
+    # address = '/MIDI/program_change/2/17'
     # address = '/OSC/kampkrusty.local/8000/app/QLab/activate'
 
     addr = address.split('/')
@@ -31,16 +32,10 @@ def parseOSC(address, *args):
     else:
         pass
 
-class oscMIDImessage():
-    pass
-
 def processOSC(addr):
     if addr[0] == 'MIDI':
-        device = 'OSC2MIDI'
-        type = addr[1]
-        ch = int(addr[2]) + 143
-        note = int(addr[3])
-        oscSocket.emit('OSC2MIDI_out', [device,[ch,note,1],type])
+        addr.pop(0)
+        oscSocket.emit('OSC2MIDI_out', addr)
     elif addr[0] == 'OSC':
         destination = addr[1]
         dest_port = addr[2]
