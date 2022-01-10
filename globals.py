@@ -23,6 +23,7 @@ path = appDir.split("/")
 user = getpass.getuser()
 
 publishQueue = Queue()
+socketioMessageQueue = Queue()
 
 if osName == 'Linux':
     path2config = appDir

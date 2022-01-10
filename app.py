@@ -43,7 +43,7 @@ def connect():
     print('[INFO] App Successfully connected to server.')
 
 @sio2.on('restart_midi')
-def restart_midi():
+def restart_midi(data):
     print('Restarting MIDI')
     time.sleep(0.1)
     for midi_process in midi_processes:
@@ -66,7 +66,7 @@ def restart_server():
     server_processes.append(Process(target=server_main, args=(SETTINGS_FILE,)))
     next_server = len(server_processes)-1
     server_processes[next_server].start()
-    restart_midi()
+    restart_midi(True)
     print('Server Restarted')
     logs.info('Server Restarted')
 

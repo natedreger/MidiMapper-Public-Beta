@@ -10,10 +10,11 @@ import os
 from flask_socketio import SocketIO
 from flask import Flask, render_template, request
 import sys
+import threading
 
 from modules.logger import *
 from modules.keymap import *
-from globals import owner, VERSION, settingsCLASS, activeSettings
+from globals import owner, VERSION, settingsCLASS, activeSettings, socketioMessageQueue
 
 cli = sys.modules['flask.cli']
 cli.show_server_banner = lambda *x: None
@@ -92,10 +93,15 @@ def server_restarted():
 
 ####################  forward web interface to main app #####################
 
+# @socketio.on('restart_midi')
+# def restart_midi():
+#     client_msg('Sent Restart MIDI')
+#     socketio.emit('restart_midi')
+
 @socketio.on('restart_midi')
-def restart_midi():
+def restart_midi(data):
     client_msg('Sent Restart MIDI')
-    socketio.emit('restart_midi')
+    socketio.emit('restart_midi',True)
 
 @socketio.on('restart_server')
 def restart_server():
@@ -259,6 +265,17 @@ def OSC2MIDI_out(message):
 
 ################ Main Functions ###################################
 #
+
+def messageListener():
+    while True:
+        try:
+            msg = socketioMessageQueue.get(1)
+            socketio.emit(msg['handle'], msg['data'])
+        except: pass
+
+
+#####################
+
 def load_settings(settings_file):
     global settings, socket_port, settingsFile
     settingsFile = settings_file
@@ -270,6 +287,8 @@ def saveServerSettings(data, settings_file):
     print('Settings Saved')
 
 def server_main(settings_file):
+    messageThread = threading.Thread(target=messageListener)
+    messageThread.start()
     socket_port = settingsCLASS.socket_port
     logs.debug(f'web_interface.py running as PID: {os.getpid()} as User: {owner(os.getpid())}')
     load_settings(settings_file)

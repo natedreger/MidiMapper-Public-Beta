@@ -147,7 +147,7 @@ class socketioMessage_Class():
         self.handle = ''
         self.data = ''
         pass
-    def emit(self, handle, data):
+    def send(self, handle, data):
         self.handle = handle
         self.data = data
         socketioMessageQueue.put(vars(self))
@@ -212,8 +212,10 @@ def select_io(message):
     temp = []
     temp.append(message['data'][0])
     setInputFilter(temp)
-    sio.emit('outport', {'data': 'Connected', 'port': outport, 'outports':outports})
-    sio.emit('io_set', {'data': {'input':message['data'][0], 'output':message['data'][1]}})
+    socketioMessage.send('outport', {'data': 'Connected', 'port': outport, 'outports':outports})
+    # sio.emit('outport', {'data': 'Connected', 'port': outport, 'outports':outports})
+    # sio.emit('io_set', {'data': {'input':message['data'][0], 'output':message['data'][1]}})
+    socketioMessage.send('io_set', {'data': {'input':message['data'][0], 'output':message['data'][1]}})
     send_settings()
     print(f"Input Filters changed to: {activeInput}")
     print(f"Output changed to: {activeOutput}")
@@ -223,7 +225,8 @@ def select_io(message):
 @sio.on('rescan_io')
 def rescan_io():
     # temp workaround for rescan not working
-    sio.emit('restart_midi')
+    # sio.emit('restart_midi')
+    socketioMessage.send('restart_midi',True)
     # scan_io('rescan')
     # send_settings()
 
@@ -283,10 +286,11 @@ def save_settings(settings):
 @sio.on('apply_settings')
 def apply_settings():
     # temp workaround for rescan not working
-    sio.emit('restart_midi')
+    # sio.emit('restart_midi')
+    socketioMessage.send('restart_midi',True)
 
 @sio.on('restart_midi')
-def restart_midi():
+def restart_midi(data):
     # sio.disconnect()
     print('MIDI Restarted')
 
@@ -295,16 +299,21 @@ def restart_midi():
 
 
 def send_ignore(indevice):
-    sio.emit('client_msg', f"Message from {indevice} Ignored, outside of filter")
+    # sio.emit('client_msg', f"Message from {indevice} Ignored, outside of filter")
+    socketioMessage.send('client_msg', f"Message from {indevice} Ignored, outside of filter")
 
 def send_client_msg(message):
-    sio.emit('client_msg', message)
+    socketioMessage.send('client_msg', message)
+    # sio.emit('client_msg', message)
 
 def send_settings():
     activeSettings.read()
     sio.emit('setup', {'match_device':match_device, 'midi_mode':midi_mode, 'outputs':filteredOutputList, 'inputs':filteredInputList, \
             'activeOutput':activeOutput, 'activeInput':activeInput,\
             'settings':settingsCLASS.config, 'keymap':mappedkeys, 'keyMapFile':keyMapFile, 'activeSettings':vars(activeSettings)})
+    # socketioMessage.send('setup', {'match_device':match_device, 'midi_mode':midi_mode, 'outputs':filteredOutputList, 'inputs':filteredInputList, \
+    #         'activeOutput':activeOutput, 'activeInput':activeInput,\
+    #         'settings':settingsCLASS.config, 'keymap':mappedkeys, 'keyMapFile':keyMapFile, 'activeSettings':vars(activeSettings)})
 
 def searchIO(type, device):
     global message_buffer, activeInput, activeOutput
@@ -448,8 +457,10 @@ def scan_io(type):
     except Exception as err:
         print('Something Went Wrong')
         logs.error(f'Something Went Wrong While Scanning I/O: {err}')
-        sio.emit('client_msg', f'Something Went Wrong with MIDI: {err}')
-        sio.emit('restart_midi')
+        # sio.emit('client_msg', f'Something Went Wrong with MIDI: {err}')
+        socketioMessage.send('client_msg', f'Something Went Wrong with MIDI: {err}')
+        # sio.emit('restart_midi')
+        socketioMessage.send('restart_midi',True)
         # end_MIDI()
         print("Exit.")
 
@@ -457,7 +468,7 @@ def mapMode(msg):
     filter = ('All' in filterInput) or (msg.indevice in filterInput)
     if msg.velocity > 0 and filter and msg.message_type == 'note_on' and msg.channel > 0:
         # sio.emit('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi, 'message_type':msg.message_type}})
-        socketioMessage.emit('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi, 'message_type':msg.message_type}})
+        socketioMessage.send('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi, 'message_type':msg.message_type}})
         remap = searchKeyMap(mappedkeys, msg.indevice, msg.note, settings['match_device'] == 'True')
 
         if remap and remap['type'] == "OSC":
@@ -465,17 +476,21 @@ def mapMode(msg):
                 OSC_client = udp_client.SimpleUDPClient(remap['host'], remap['port'])
                 OSC_client.send_message(remap['message'],'')
                 print(f'OSC message {remap["message"]}')
-                sio.emit('midi_sent', {'data': f"Mapped to OSC message {remap['message']}"})
+                # sio.emit('midi_sent', {'data': f"Mapped to OSC message {remap['message']}"})
+                socketioMessage.send('midi_sent', {'data': f"Mapped to OSC message {remap['message']}"})
             except Exception as err:
-                sio.emit('client_msg', f"Error: {remap['host']}:{remap['port']} {err}")
+                # sio.emit('client_msg', f"Error: {remap['host']}:{remap['port']} {err}")
+                socketioMessage.send('client_msg', f"Error: {remap['host']}:{remap['port']} {err}")
 
         if remap and remap['type'] == "MQTT":
             try:
                 publishQueue.put([remap['topic'], remap['message']])
                 print(f"MQTT topic {remap['topic']} message {remap['message']}")
-                sio.emit('midi_sent', {'data': f"Mapped to MQTT topic {remap['topic']} message {remap['message']}"})
+                # sio.emit('midi_sent', {'data': f"Mapped to MQTT topic {remap['topic']} message {remap['message']}"})
+                socketioMessage.send('midi_sent', {'data': f"Mapped to MQTT topic {remap['topic']} message {remap['message']}"})
             except Exception as err:
-                sio.emit('client_msg', f"Error publishing {err}")
+                # sio.emit('client_msg', f"Error publishing {err}")
+                socketioMessage.send('client_msg', f"Error publishing {err}")
 
         if activeOutput != 'None':
             if remap:
@@ -484,19 +499,22 @@ def mapMode(msg):
                     mw = MidiOutWrapper(midiout, ch=remap['channel'])
                     mw.send_program_change(remap['value'])
                     print(f"PC sent channel: {remap['channel']} value: {remap['value']}")
-                    sio.emit('midi_sent', {'data': f"Mapped to PC channel: {remap['channel']} value: {remap['value']}"})
+                    # sio.emit('midi_sent', {'data': f"Mapped to PC channel: {remap['channel']} value: {remap['value']}"})
+                    socketioMessage.send('midi_sent', {'data': f"Mapped to PC channel: {remap['channel']} value: {remap['value']}"})
                 elif remap['type'] == 'NOTE_ON':
                     mw = MidiOutWrapper(midiout, ch=remap['channel'])
                     mw.send_note_on(remap['new_note'])
                     # mw.send_note_off(remap['new_note'])
                     print(f"sent NOTE_ON {remap['new_note']}")
-                    sio.emit('midi_sent', {'data': f"Mapped to NOTE_ON Channel: {remap['channel']} Note: {remap['new_note']}"})
+                    # sio.emit('midi_sent', {'data': f"Mapped to NOTE_ON Channel: {remap['channel']} Note: {remap['new_note']}"})
+                    socketioMessage.send('midi_sent', {'data': f"Mapped to NOTE_ON Channel: {remap['channel']} Note: {remap['new_note']}"})
             else:
                 mw = MidiOutWrapper(midiout, ch=msg.channel)
                 mw.send_note_on(msg.note)
                 print(f"No mapping for note {msg.note} on {msg.indevice} found")
                 print(f"Sent {msg.note}")
-                sio.emit('midi_sent', {'data': f"Channel: {msg.channel} Note: {msg.note}"})
+                # sio.emit('midi_sent', {'data': f"Channel: {msg.channel} Note: {msg.note}"})
+                socketioMessage.send('midi_sent', {'data': f"Channel: {msg.channel} Note: {msg.note}"})
             time.sleep(0.1)
     elif (msg.velocity > 0) and (not filter) and (not 'None' in filterInput):
         send_ignore(msg.indevice)
@@ -507,26 +525,30 @@ def thruMode(msg):
     filter = ('All' in filterInput) or (msg.indevice in filterInput)
     if filter and msg.channel > 0:
         mw = MidiOutWrapper(midiout, ch=msg.channel)
-        sio.emit('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi, 'message_type':msg.message_type}})
-        # sio.emit('midi_msg', {'data': f'{msg.indevice} : {msg.midi}'})
+        socketioMessage.send('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi, 'message_type':msg.message_type}})
+        # sio.emit('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi, 'message_type':msg.message_type}})
         if msg.message_type == 'note_on':
             # mw = MidiOutWrapper(midiout, ch=msg.channel)
             mw.send_note_on(msg.note, msg.velocity)
             print(f"Sent {msg.note} on Channel: {msg.channel}")
-            sio.emit('midi_sent', {'data': f"{msg.message_type} Channel: {msg.channel} Note: {msg.note}"})
+            socketioMessage.send('midi_sent', {'data': f"{msg.message_type} Channel: {msg.channel} Note: {msg.note}"})
+            # sio.emit('midi_sent', {'data': f"{msg.message_type} Channel: {msg.channel} Note: {msg.note}"})
         elif msg.message_type == 'note_off':
             mw.send_note_off(msg.note)
-            sio.emit('midi_sent', {'data': f"{msg.message_type} Channel: {msg.channel} Note: {msg.note}"})
+            # sio.emit('midi_sent', {'data': f"{msg.message_type} Channel: {msg.channel} Note: {msg.note}"})
+            socketioMessage.send('midi_sent', {'data': f"{msg.message_type} Channel: {msg.channel} Note: {msg.note}"})
         elif msg.message_type == 'sustain':
             # mw = MidiOutWrapper(midiout, ch=msg.channel)
             mw.send_control_change(64, msg.velocity, ch=msg.channel)
             print(f"Sent sustain on Channel: {msg.channel}")
-            sio.emit('midi_sent', {'data': f"Sent sustain on Channel: {msg.channel}"})
+            socketioMessage.send('midi_sent', {'data': f"Sent sustain on Channel: {msg.channel}"})
+            # sio.emit('midi_sent', {'data': f"Sent sustain on Channel: {msg.channel}"})
         elif msg.message_type == 'program_change':
             # mw = MidiOutWrapper(midiout, ch=msg.channel)
             mw.send_program_change(msg.note)
             print(f"PC sent channel: {msg.channel} value: {msg.note}")
-            sio.emit('midi_sent', {'data': f"Mapped to PC channel: {msg.channel} value: {msg.note}"})
+            # sio.emit('midi_sent', {'data': f"Mapped to PC channel: {msg.channel} value: {msg.note}"})
+            socketioMessage.send('midi_sent', {'data': f"Mapped to PC channel: {msg.channel} value: {msg.note}"})
         else:
             print(msg.message_type)
 
@@ -549,7 +571,6 @@ def midi_main():
     # main program
     print("Entering MIDI loop. ")
 
-
     try:
         try:
             while True:
@@ -558,88 +579,16 @@ def midi_main():
                     msg = q.get(1)
                     # if msg:
                     mapMode(msg)
-                #         filter = ('All' in filterInput) or (msg.indevice in filterInput)
-                #         if msg.velocity > 0 and filter and msg.message_type == 'note_on' and msg.channel > 0:
-                #             sio.emit('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi, 'message_type':msg.message_type}})
-                #             remap = searchKeyMap(mappedkeys, msg.indevice, msg.note, settings['match_device'] == 'True')
-                #
-                #             if remap and remap['type']=="OSC":
-                #                 try:
-                #                     OSC_client = udp_client.SimpleUDPClient(remap['host'], remap['port'])
-                #                     OSC_client.send_message(remap['message'],'')
-                #                     print(f'OSC message {remap["message"]}')
-                #                     sio.emit('midi_sent', {'data': f"Mapped to OSC message {remap['message']}"})
-                #                 except Exception as err:
-                #                     sio.emit('client_msg', f"Error: {remap['host']}:{remap['port']} {err}")
-                #
-                #             if remap and remap['type']=="MQTT":
-                #                 try:
-                #                     publishQueue.put([remap['topic'], remap['message']])
-                #                     print(f"MQTT topic {remap['topic']} message {remap['message']}")
-                #                     sio.emit('midi_sent', {'data': f"Mapped to MQTT topic {remap['topic']} message {remap['message']}"})
-                #                 except Exception as err:
-                #                     sio.emit('client_msg', f"Error publishing {err}")
-                #
-                #             if activeOutput != 'None':
-                #                 # print(settings['match_device'] == 'True')
-                #                 if remap:
-                #                     print(f"Mapping for note {msg.note} on {msg.indevice} found")
-                #                     if remap['type'] == 'PROGRAM_CHANGE':
-                #                         mw = MidiOutWrapper(midiout, ch=remap['channel'])
-                #                         mw.send_program_change(remap['value'])
-                #                         print(f"PC sent channel: {remap['channel']} value: {remap['value']}")
-                #                         sio.emit('midi_sent', {'data': f"Mapped to PC channel: {remap['channel']} value: {remap['value']}"})
-                #                     elif remap['type'] == 'NOTE_ON':
-                #                         mw = MidiOutWrapper(midiout, ch=remap['channel'])
-                #                         mw.send_note_on(remap['new_note'])
-                #                         # mw.send_note_off(remap['new_note'])
-                #                         print(f"sent NOTE_ON {remap['new_note']}")
-                #                         sio.emit('midi_sent', {'data': f"Mapped to NOTE_ON Channel: {remap['channel']} Note: {remap['new_note']}"})
-                #                 else:
-                #                     mw = MidiOutWrapper(midiout, ch=msg.channel)
-                #                     mw.send_note_on(msg.note)
-                #                     print(f"No mapping for note {msg.note} on {msg.indevice} found")
-                #                     print(f"Sent {msg.note}")
-                #                     sio.emit('midi_sent', {'data': f"Channel: {msg.channel} Note: {msg.note}"})
-                #                 time.sleep(0.1)
-                #         elif (msg.velocity > 0) and (not filter) and (not 'None' in filterInput):
-                #             print(filterInput)
-                #             send_ignore(msg.indevice)
-                # time.sleep(0.01)
-
                 while midi_mode == 'Thru':
                     msg = q.get(1)
                     thruMode(msg)
-                    # filter = ('All' in filterInput) or (msg.indevice in filterInput)
-                    # if filter and msg.channel > 0:
-                    #     sio.emit('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi, 'message_type':msg.message_type}})
-                    #     # sio.emit('midi_msg', {'data': f'{msg.indevice} : {msg.midi}'})
-                    #     if msg.message_type == 'note_on':
-                    #         mw = MidiOutWrapper(midiout, ch=msg.channel)
-                    #         mw.send_note_on(msg.note, msg.velocity)
-                    #         print(f"Sent {msg.note} on Channel: {msg.channel}")
-                    #         sio.emit('midi_sent', {'data': f"{msg.message_type} Channel: {msg.channel} Note: {msg.note}"})
-                    #     elif msg.message_type == 'note_off':
-                    #         mw.send_note_off(msg.note)
-                    #         sio.emit('midi_sent', {'data': f"{msg.message_type} Channel: {msg.channel} Note: {msg.note}"})
-                    #     elif msg.message_type == 'sustain':
-                    #         mw = MidiOutWrapper(midiout, ch=msg.channel)
-                    #         mw.send_control_change(64, msg.velocity, ch=msg.channel)
-                    #         print(f"Sent sustain on Channel: {msg.channel}")
-                    #         sio.emit('midi_sent', {'data': f"Sent sustain on Channel: {msg.channel}"})
-                    #     elif msg.message_type == 'program_change':
-                    #         mw = MidiOutWrapper(midiout, ch=msg.channel)
-                    #         mw.send_program_change(msg.note)
-                    #         print(f"PC sent channel: {msg.channel} value: {msg.note}")
-                    #         sio.emit('midi_sent', {'data': f"Mapped to PC channel: {msg.channel} value: {msg.note}"})
-                    #     else:
-                    #         print(msg.message_type)
-
         except Exception as err:
             print(f"{ __name__} - Something Went Wrong with MIDI {err}")
             logs.error(f"{ __name__} - Something Went Wrong with MIDI {err}")
-            sio.emit('client_msg', f'Something Went Wrong with MIDI - {err} - Restarting MIDI' )
-            sio.emit('restart_midi')
+            socketioMessage.send('client_msg', f'Something Went Wrong with MIDI - {err} - Restarting MIDI' )
+            # sio.emit('client_msg', f'Something Went Wrong with MIDI - {err} - Restarting MIDI' )
+            # sio.emit('restart_midi')
+            socketioMessage.send('restart_midi',True)
     except Exception as err:
         save_midiSetting(settings_file, settings)
         end_MIDI()
