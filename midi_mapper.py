@@ -22,7 +22,7 @@ from modules.midioutwrapper import MidiOutWrapper
 from modules.probe_ports import probe_ports, getAvailableIO
 from modules.logger import *
 from modules.keymap import getMappedKeys, searchKeyMap
-from globals import owner, connectSocket, publishQueue, settingsCLASS, activeSettings
+from globals import owner, connectSocket, publishQueue, settingsCLASS, activeSettings, socketioMessageQueue
 
 keyMapFile = 'default.json'
 settingsFile = 'settings.json'
@@ -142,6 +142,17 @@ class webPCNote(MidiMessage):
 
 
 ################ socket IO #######################3
+class socketioMessage_Class():
+    def __init__(self):
+        self.handle = ''
+        self.data = ''
+        pass
+    def emit(self, handle, data):
+        self.handle = handle
+        self.data = data
+        socketioMessageQueue.put(vars(self))
+
+socketioMessage = socketioMessage_Class()
 
 @sio.event
 def connect():
@@ -442,6 +453,82 @@ def scan_io(type):
         # end_MIDI()
         print("Exit.")
 
+def mapMode(msg):
+    filter = ('All' in filterInput) or (msg.indevice in filterInput)
+    if msg.velocity > 0 and filter and msg.message_type == 'note_on' and msg.channel > 0:
+        # sio.emit('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi, 'message_type':msg.message_type}})
+        socketioMessage.emit('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi, 'message_type':msg.message_type}})
+        remap = searchKeyMap(mappedkeys, msg.indevice, msg.note, settings['match_device'] == 'True')
+
+        if remap and remap['type'] == "OSC":
+            try:
+                OSC_client = udp_client.SimpleUDPClient(remap['host'], remap['port'])
+                OSC_client.send_message(remap['message'],'')
+                print(f'OSC message {remap["message"]}')
+                sio.emit('midi_sent', {'data': f"Mapped to OSC message {remap['message']}"})
+            except Exception as err:
+                sio.emit('client_msg', f"Error: {remap['host']}:{remap['port']} {err}")
+
+        if remap and remap['type'] == "MQTT":
+            try:
+                publishQueue.put([remap['topic'], remap['message']])
+                print(f"MQTT topic {remap['topic']} message {remap['message']}")
+                sio.emit('midi_sent', {'data': f"Mapped to MQTT topic {remap['topic']} message {remap['message']}"})
+            except Exception as err:
+                sio.emit('client_msg', f"Error publishing {err}")
+
+        if activeOutput != 'None':
+            if remap:
+                print(f"Mapping for note {msg.note} on {msg.indevice} found")
+                if remap['type'] == 'PROGRAM_CHANGE':
+                    mw = MidiOutWrapper(midiout, ch=remap['channel'])
+                    mw.send_program_change(remap['value'])
+                    print(f"PC sent channel: {remap['channel']} value: {remap['value']}")
+                    sio.emit('midi_sent', {'data': f"Mapped to PC channel: {remap['channel']} value: {remap['value']}"})
+                elif remap['type'] == 'NOTE_ON':
+                    mw = MidiOutWrapper(midiout, ch=remap['channel'])
+                    mw.send_note_on(remap['new_note'])
+                    # mw.send_note_off(remap['new_note'])
+                    print(f"sent NOTE_ON {remap['new_note']}")
+                    sio.emit('midi_sent', {'data': f"Mapped to NOTE_ON Channel: {remap['channel']} Note: {remap['new_note']}"})
+            else:
+                mw = MidiOutWrapper(midiout, ch=msg.channel)
+                mw.send_note_on(msg.note)
+                print(f"No mapping for note {msg.note} on {msg.indevice} found")
+                print(f"Sent {msg.note}")
+                sio.emit('midi_sent', {'data': f"Channel: {msg.channel} Note: {msg.note}"})
+            time.sleep(0.1)
+    elif (msg.velocity > 0) and (not filter) and (not 'None' in filterInput):
+        send_ignore(msg.indevice)
+
+
+
+def thruMode(msg):
+    filter = ('All' in filterInput) or (msg.indevice in filterInput)
+    if filter and msg.channel > 0:
+        mw = MidiOutWrapper(midiout, ch=msg.channel)
+        sio.emit('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi, 'message_type':msg.message_type}})
+        # sio.emit('midi_msg', {'data': f'{msg.indevice} : {msg.midi}'})
+        if msg.message_type == 'note_on':
+            # mw = MidiOutWrapper(midiout, ch=msg.channel)
+            mw.send_note_on(msg.note, msg.velocity)
+            print(f"Sent {msg.note} on Channel: {msg.channel}")
+            sio.emit('midi_sent', {'data': f"{msg.message_type} Channel: {msg.channel} Note: {msg.note}"})
+        elif msg.message_type == 'note_off':
+            mw.send_note_off(msg.note)
+            sio.emit('midi_sent', {'data': f"{msg.message_type} Channel: {msg.channel} Note: {msg.note}"})
+        elif msg.message_type == 'sustain':
+            # mw = MidiOutWrapper(midiout, ch=msg.channel)
+            mw.send_control_change(64, msg.velocity, ch=msg.channel)
+            print(f"Sent sustain on Channel: {msg.channel}")
+            sio.emit('midi_sent', {'data': f"Sent sustain on Channel: {msg.channel}"})
+        elif msg.message_type == 'program_change':
+            # mw = MidiOutWrapper(midiout, ch=msg.channel)
+            mw.send_program_change(msg.note)
+            print(f"PC sent channel: {msg.channel} value: {msg.note}")
+            sio.emit('midi_sent', {'data': f"Mapped to PC channel: {msg.channel} value: {msg.note}"})
+        else:
+            print(msg.message_type)
 
 ############### Main
 
@@ -468,85 +555,85 @@ def midi_main():
             while True:
                 timer = time.time()
                 while midi_mode == 'Mapped':
-                    # msg = MidiMessage(q.get(1))
                     msg = q.get(1)
-                    if msg:
-                        filter = ('All' in filterInput) or (msg.indevice in filterInput)
-                        if msg.velocity > 0 and filter and msg.message_type == 'note_on' and msg.channel > 0:
-                            sio.emit('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi, 'message_type':msg.message_type}})
-                            remap = searchKeyMap(mappedkeys, msg.indevice, msg.note, settings['match_device'] == 'True')
-
-                            if remap and remap['type']=="OSC":
-                                try:
-                                    OSC_client = udp_client.SimpleUDPClient(remap['host'], remap['port'])
-                                    OSC_client.send_message(remap['message'],'')
-                                    print(f'OSC message {remap["message"]}')
-                                    sio.emit('midi_sent', {'data': f"Mapped to OSC message {remap['message']}"})
-                                except Exception as err:
-                                    sio.emit('client_msg', f"Error: {remap['host']}:{remap['port']} {err}")
-
-                            if remap and remap['type']=="MQTT":
-                                try:
-                                    publishQueue.put([remap['topic'], remap['message']])
-                                    print(f"MQTT topic {remap['topic']} message {remap['message']}")
-                                    sio.emit('midi_sent', {'data': f"Mapped to MQTT topic {remap['topic']} message {remap['message']}"})
-                                except Exception as err:
-                                    sio.emit('client_msg', f"Error publishing {err}")
-
-                            if activeOutput != 'None':
-                                # print(settings['match_device'] == 'True')
-                                if remap:
-                                    print(f"Mapping for note {msg.note} on {msg.indevice} found")
-                                    if remap['type'] == 'PROGRAM_CHANGE':
-                                        mw = MidiOutWrapper(midiout, ch=remap['channel'])
-                                        mw.send_program_change(remap['value'])
-                                        print(f"PC sent channel: {remap['channel']} value: {remap['value']}")
-                                        sio.emit('midi_sent', {'data': f"Mapped to PC channel: {remap['channel']} value: {remap['value']}"})
-                                    elif remap['type'] == 'NOTE_ON':
-                                        mw = MidiOutWrapper(midiout, ch=remap['channel'])
-                                        mw.send_note_on(remap['new_note'])
-                                        # mw.send_note_off(remap['new_note'])
-                                        print(f"sent NOTE_ON {remap['new_note']}")
-                                        sio.emit('midi_sent', {'data': f"Mapped to NOTE_ON Channel: {remap['channel']} Note: {remap['new_note']}"})
-                                else:
-                                    mw = MidiOutWrapper(midiout, ch=msg.channel)
-                                    mw.send_note_on(msg.note)
-                                    print(f"No mapping for note {msg.note} on {msg.indevice} found")
-                                    print(f"Sent {msg.note}")
-                                    sio.emit('midi_sent', {'data': f"Channel: {msg.channel} Note: {msg.note}"})
-                                time.sleep(0.1)
-                        elif (msg.velocity > 0) and (not filter) and (not 'None' in filterInput):
-                            print(filterInput)
-                            send_ignore(msg.indevice)
-                time.sleep(0.01)
+                    # if msg:
+                    mapMode(msg)
+                #         filter = ('All' in filterInput) or (msg.indevice in filterInput)
+                #         if msg.velocity > 0 and filter and msg.message_type == 'note_on' and msg.channel > 0:
+                #             sio.emit('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi, 'message_type':msg.message_type}})
+                #             remap = searchKeyMap(mappedkeys, msg.indevice, msg.note, settings['match_device'] == 'True')
+                #
+                #             if remap and remap['type']=="OSC":
+                #                 try:
+                #                     OSC_client = udp_client.SimpleUDPClient(remap['host'], remap['port'])
+                #                     OSC_client.send_message(remap['message'],'')
+                #                     print(f'OSC message {remap["message"]}')
+                #                     sio.emit('midi_sent', {'data': f"Mapped to OSC message {remap['message']}"})
+                #                 except Exception as err:
+                #                     sio.emit('client_msg', f"Error: {remap['host']}:{remap['port']} {err}")
+                #
+                #             if remap and remap['type']=="MQTT":
+                #                 try:
+                #                     publishQueue.put([remap['topic'], remap['message']])
+                #                     print(f"MQTT topic {remap['topic']} message {remap['message']}")
+                #                     sio.emit('midi_sent', {'data': f"Mapped to MQTT topic {remap['topic']} message {remap['message']}"})
+                #                 except Exception as err:
+                #                     sio.emit('client_msg', f"Error publishing {err}")
+                #
+                #             if activeOutput != 'None':
+                #                 # print(settings['match_device'] == 'True')
+                #                 if remap:
+                #                     print(f"Mapping for note {msg.note} on {msg.indevice} found")
+                #                     if remap['type'] == 'PROGRAM_CHANGE':
+                #                         mw = MidiOutWrapper(midiout, ch=remap['channel'])
+                #                         mw.send_program_change(remap['value'])
+                #                         print(f"PC sent channel: {remap['channel']} value: {remap['value']}")
+                #                         sio.emit('midi_sent', {'data': f"Mapped to PC channel: {remap['channel']} value: {remap['value']}"})
+                #                     elif remap['type'] == 'NOTE_ON':
+                #                         mw = MidiOutWrapper(midiout, ch=remap['channel'])
+                #                         mw.send_note_on(remap['new_note'])
+                #                         # mw.send_note_off(remap['new_note'])
+                #                         print(f"sent NOTE_ON {remap['new_note']}")
+                #                         sio.emit('midi_sent', {'data': f"Mapped to NOTE_ON Channel: {remap['channel']} Note: {remap['new_note']}"})
+                #                 else:
+                #                     mw = MidiOutWrapper(midiout, ch=msg.channel)
+                #                     mw.send_note_on(msg.note)
+                #                     print(f"No mapping for note {msg.note} on {msg.indevice} found")
+                #                     print(f"Sent {msg.note}")
+                #                     sio.emit('midi_sent', {'data': f"Channel: {msg.channel} Note: {msg.note}"})
+                #                 time.sleep(0.1)
+                #         elif (msg.velocity > 0) and (not filter) and (not 'None' in filterInput):
+                #             print(filterInput)
+                #             send_ignore(msg.indevice)
+                # time.sleep(0.01)
 
                 while midi_mode == 'Thru':
-                    # msg = MidiMessage(q.get(1))
                     msg = q.get(1)
-                    filter = ('All' in filterInput) or (msg.indevice in filterInput)
-                    if filter and msg.channel > 0:
-                        sio.emit('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi, 'message_type':msg.message_type}})
-                        # sio.emit('midi_msg', {'data': f'{msg.indevice} : {msg.midi}'})
-                        if msg.message_type == 'note_on':
-                            mw = MidiOutWrapper(midiout, ch=msg.channel)
-                            mw.send_note_on(msg.note, msg.velocity)
-                            print(f"Sent {msg.note} on Channel: {msg.channel}")
-                            sio.emit('midi_sent', {'data': f"{msg.message_type} Channel: {msg.channel} Note: {msg.note}"})
-                        elif msg.message_type == 'note_off':
-                            mw.send_note_off(msg.note)
-                            sio.emit('midi_sent', {'data': f"{msg.message_type} Channel: {msg.channel} Note: {msg.note}"})
-                        elif msg.message_type == 'sustain':
-                            mw = MidiOutWrapper(midiout, ch=msg.channel)
-                            mw.send_control_change(64, msg.velocity, ch=msg.channel)
-                            print(f"Sent sustain on Channel: {msg.channel}")
-                            sio.emit('midi_sent', {'data': f"Sent sustain on Channel: {msg.channel}"})
-                        elif msg.message_type == 'program_change':
-                            mw = MidiOutWrapper(midiout, ch=msg.channel)
-                            mw.send_program_change(msg.note)
-                            print(f"PC sent channel: {msg.channel} value: {msg.note}")
-                            sio.emit('midi_sent', {'data': f"Mapped to PC channel: {msg.channel} value: {msg.note}"})
-                        else:
-                            print(msg.message_type)
+                    thruMode(msg)
+                    # filter = ('All' in filterInput) or (msg.indevice in filterInput)
+                    # if filter and msg.channel > 0:
+                    #     sio.emit('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi, 'message_type':msg.message_type}})
+                    #     # sio.emit('midi_msg', {'data': f'{msg.indevice} : {msg.midi}'})
+                    #     if msg.message_type == 'note_on':
+                    #         mw = MidiOutWrapper(midiout, ch=msg.channel)
+                    #         mw.send_note_on(msg.note, msg.velocity)
+                    #         print(f"Sent {msg.note} on Channel: {msg.channel}")
+                    #         sio.emit('midi_sent', {'data': f"{msg.message_type} Channel: {msg.channel} Note: {msg.note}"})
+                    #     elif msg.message_type == 'note_off':
+                    #         mw.send_note_off(msg.note)
+                    #         sio.emit('midi_sent', {'data': f"{msg.message_type} Channel: {msg.channel} Note: {msg.note}"})
+                    #     elif msg.message_type == 'sustain':
+                    #         mw = MidiOutWrapper(midiout, ch=msg.channel)
+                    #         mw.send_control_change(64, msg.velocity, ch=msg.channel)
+                    #         print(f"Sent sustain on Channel: {msg.channel}")
+                    #         sio.emit('midi_sent', {'data': f"Sent sustain on Channel: {msg.channel}"})
+                    #     elif msg.message_type == 'program_change':
+                    #         mw = MidiOutWrapper(midiout, ch=msg.channel)
+                    #         mw.send_program_change(msg.note)
+                    #         print(f"PC sent channel: {msg.channel} value: {msg.note}")
+                    #         sio.emit('midi_sent', {'data': f"Mapped to PC channel: {msg.channel} value: {msg.note}"})
+                    #     else:
+                    #         print(msg.message_type)
 
         except Exception as err:
             print(f"{ __name__} - Something Went Wrong with MIDI {err}")
