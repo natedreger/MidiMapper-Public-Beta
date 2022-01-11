@@ -139,6 +139,6 @@ try:
         else:
             print("Connected!")
             connected = True
-except:
+except KeyboardInterrupt:
+    print('Processes Terminating')
     quit()
-    print('Processes Terminated')

@@ -53,17 +53,20 @@ dispatcher.set_default_handler(osc_handler)
 
 
 def osc_main(settings):
-    socket_addr = 'localhost'
-    socket_port = int(settingsCLASS.socket_port)
-    osc_ip = "0.0.0.0" #allow external
-    osc_port = int(settingsCLASS.osc_port)#9001
-    logs.debug(f'osc.py running as PID: {os.getpid()} as User: {owner(os.getpid())}')
-    connectSocket(oscSocket, socket_addr, socket_port)
-    server = BlockingOSCUDPServer((osc_ip, osc_port), dispatcher)
-    print(f"OSC Listening on {osc_ip}:{osc_port}")
-    server.serve_forever()  # Blocks forever
-    server.shutdown()
-
+    try:
+        socket_addr = 'localhost'
+        socket_port = int(settingsCLASS.socket_port)
+        osc_ip = "0.0.0.0" #allow external
+        osc_port = int(settingsCLASS.osc_port)#9001
+        logs.debug(f'osc.py running as PID: {os.getpid()} as User: {owner(os.getpid())}')
+        connectSocket(oscSocket, socket_addr, socket_port)
+        server = BlockingOSCUDPServer((osc_ip, osc_port), dispatcher)
+        print(f"OSC Listening on {osc_ip}:{osc_port}")
+        server.serve_forever()  # Blocks forever
+        server.shutdown()
+    except KeyboardInterrupt:
+        pass
+        
 if __name__ == '__main__':
     settings={}
     settings['socket_port'] = 5005

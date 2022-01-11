@@ -80,6 +80,7 @@ class MidiInput:
 class MidiDevice:
     filename = 'knowndevices.dat'
     knowndevices = []
+    deviceConfigs = []
     def __init__(self):
         self.device_name = 'default'
         self.ch_offset = 143
@@ -95,11 +96,14 @@ class MidiDevice:
 
     def load(self):
         with open(MidiDevice.filename, 'r') as config_file:
-            MidiDevice.knowndevices = json.load(config_file)
+            MidiDevice.deviceConfigs = json.load(config_file)
+            for key in MidiDevice.deviceConfigs:
+                MidiDevice.knowndevices.append(key['device_name'])
+        print(MidiDevice.knowndevices)
 
     def save(self):
     	with open(MidiDevice.filename, 'w') as config_file:
-            json.dump(MidiDevice.knowndevices, config_file)
+            json.dump(MidiDevice.deviceConfigs, config_file)
 
     def search(self, device_name):
     	# return result
@@ -110,7 +114,7 @@ class MidiDevice:
 
     def addDeviceConfig(self):
         config = vars(self)
-        MidiDevice.knowndevices.append(config)
+        MidiDevice.deviceConfigs.append(config)
         self.save()
 
     def getType(self, device, midi):
@@ -120,51 +124,29 @@ class MidiDevice:
     	message_type = 'note_on'
     	return message_type
 
-newDevice = MidiDevice()
-newDevice.load()
-# print(MidiDevice.knowndevices)
+devices = MidiDevice()
+devices.load()
 
-def learnMidiDevice():
-    print('///////////////////////////////////////')
-    print('Set Controller to Channel 1 then')
-    print('Press and Hold Pitch Up')
-    on = []
-    time.sleep(2)
-    while True:
-        try: on.append(q.get(0).midi)
-        except: break
-    q.queue.clear()
-    setattr(newDevice, 'pitchUp', on[len(on)-1])
-    print(f'Captured pitchup')
 
-    print('Press and Hold Pitch Down')
-    on = []
-    time.sleep(2)
-    while True:
-        try: on.append(q.get(0).midi)
-        except: break
-    setattr(newDevice, 'pitchDown', on[len(on)-1])
-    print(f'Captured pitchDown')
-
-    print('Press and Hold Mod')
-    on = []
-    time.sleep(2)
-    while True:
-        try: on.append(q.get(0).midi)
-        except: break
-    setattr(newDevice, 'mod', on[len(on)-1])
-    print(f'Captured mod_on, release mod')
-
-    newDevice.addDeviceConfig()
-    print(vars(newDevice))
 
 class MidiMessage:
     def __init__(self, message, *type):
-        ch_offset = 143
         self.indevice=message[0]
         # may need device maps to define channel numbers
+        # get values from MidiDevice#
+        if self.indevice in MidiDevice.knowndevices:
+            config = MidiDevice.deviceConfigs[MidiDevice.knowndevices.index(self.indevice)]
+            print(config)
+        else:
+            config = MidiDevice.deviceConfigs[MidiDevice.knowndevices.index('default')]
+            print(config)
         self.midi=message[1]
-        self.channel=self.midi[0]-ch_offset
+        print(self.midi)
+        for i in config:
+            if config[i] == self.midi:
+                self.message_type = i
+                print(self.message_type)
+        self.channel=self.midi[0] - config['ch_offset']
         self.note=self.midi[1]
         self.velocity=self.midi[2]
         if self.channel > 16:
@@ -192,6 +174,7 @@ class MidiMessage:
         if type:
             self.message_type = type[0]
         publishQueue.put(['MIDI',str(self.message_type)])
+        print(self.message_type, self.channel, self.note, self.velocity)
 
 class webMidiNote(MidiMessage):
     def __init__(self, message):
@@ -373,6 +356,95 @@ def restart_midi(data):
 
 ##################### Functions
 
+def learnMidiDevice():
+    # set flag to escape
+    try:
+        print('///////////////////////////////////////')
+        print('Use ctrl-c to exit to main')
+        print('Set Controller to Channel 1 then')
+        print('Press Any Key on controller to Start')
+        device = q.get(1)
+        # see if device exists, prompt to exit
+        if device.indevice in MidiDevice.knowndevices:
+            again = str(input(f'{device.indevice} already learned, learn again? y/n > '))
+            if again == 'n':
+                print ('\n use ctrl-c to exit \n')
+                time.sleep(5)
+            elif again == 'y':
+                print('\n OK \n')
+                pass
+        setattr(newDevice, 'device_name', device.indevice)
+        setattr(newDevice, 'ch_offset', device.midi[0] - 1)
+        q.get(1) # toss the key up
+        print(f'Ready to learn keys on {device.indevice}')
+
+        print('Press and Hold any Note Key')
+        setattr(newDevice, 'note_on', q.get(1).midi)
+        print(f'Captured note_on, release key')
+        setattr(newDevice, 'note_off', q.get(1).midi)
+        print(f'Captured note_off')
+
+        print('Press and Hold Sustain')
+        setattr(newDevice, 'sustain_on', q.get(1).midi)
+        print(f'Captured sustain_on, release sustain')
+        setattr(newDevice, 'sustain_off', q.get(1).midi)
+        print(f'Captured sustain_off')
+
+        print('Press and Hold Pitch Up')
+        on = []
+        time.sleep(2)
+        while True:
+            try: on.append(q.get(0).midi)
+            except: break
+        try:
+            setattr(newDevice, 'pitchUp', on[len(on)-1])
+            print(f'Captured pitchup')
+        except IndexError:
+            print('Failed to capture pitch up')
+        q.queue.clear()
+
+        print('Press and Hold Pitch Down')
+        on = []
+        time.sleep(2)
+        while True:
+            try: on.append(q.get(0).midi)
+            except: break
+        try:
+            setattr(newDevice, 'pitchDown', on[len(on)-1])
+            print(f'Captured pitchDown')
+        except IndexError:
+            print('Failed to capture pitch down')
+
+        print('Press and Hold Mod')
+        on = []
+        time.sleep(2)
+        while True:
+            try: on.append(q.get(0).midi)
+            except: break
+        try:
+            setattr(newDevice, 'mod', on[len(on)-1])
+            print(f'Captured mod_on, release mod')
+        except IndexError:
+            print('failed to capture mod')
+
+        print('Adjust Volume')
+        on = []
+        time.sleep(2)
+        while True:
+            try: on.append(q.get(0).midi)
+            except: break
+        try:
+            setattr(newDevice, 'volumeUp', on[len(on)-1])
+            print(f'Captured volume')
+        except IndexError:
+            print('failed to volume')
+
+        newDevice.addDeviceConfig()
+        print('All done!')
+        print(vars(newDevice))
+    except KeyboardInterrupt:
+        print('\nExiting Learn Device without saving\n')
+        pass
 
 def send_ignore(indevice):
     socketioMessage.send('client_msg', f"Message from {indevice} Ignored, outside of filter")
@@ -630,18 +702,17 @@ def midi_main():
     if __name__ != '__main__':
         connectSocket(sio, server_addr, socket_port)
     elif __name__ == '__main__':
-        learn = 'n'
+        print('\n')
         learn = str(input('Learn MIDI Device? y/n > '))
         if learn == 'y':
             learnMidiDevice()
             pass
         else:
+            print('\n')
             pass
-
 
     # main program
     print("Entering MIDI loop. ")
-
     try:
         try:
             while True:
@@ -663,6 +734,13 @@ def midi_main():
         end_MIDI()
         logs.info(f"{ __name__} - MIDI Ended - {err} ")
         print('Exiting')
+
+    except KeyboardInterrupt:
+        if __name__ == '__main__':
+            print('\nquit\n')
+            os._exit(os.EX_OK)
+        else:
+            pass
 
 if __name__ == '__main__':
     midi_main()
