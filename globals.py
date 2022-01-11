@@ -4,6 +4,7 @@ import os
 import json
 import getpass
 import platform
+import shutil
 from dotenv import load_dotenv
 from multiprocessing import Queue
 from cryptography.fernet import Fernet
@@ -27,19 +28,22 @@ socketioMessageQueue = Queue()
 
 if osName == 'Linux':
     path2config = appDir
-    path2key = f'/home/{user}/.ssh/midiMapper.key'
+    path2key = f'/home/{user}/.ssh/'
+
+if not os.path.exists(path2key):
+    os.makedirs(path2key)
 
 ############## GLOBAL FUNCTIONS ###############
 
 #####  Crypto \\\\\\\\\\\\\\
 def genwrite_key():
     key = Fernet.generate_key()
-    with open (path2key, 'wb') as key_file:
+    with open (f'{path2key}midiMapper.key', 'wb') as key_file:
         key_file.write(key)
 
 def call_key():
     try:
-        return open(path2key, 'rb').read()
+        return open(f'{path2key}midiMapper.key', 'rb').read()
     except FileNotFoundError as err:
         genwrite_key()
 
@@ -64,6 +68,8 @@ def checkPaswd(password):
     if len(password) in range(1,51):
         new = encrypt(password)
         return [False, new]
+    elif len(password) == 0:
+        return [False,False]
     else: return [True]
 
 #####////////////////////////////
@@ -96,12 +102,17 @@ class SettingsManager:
         self.filename = file
         self.config = {}
 
-        try:
-            with open(self.filename) as config:
-                self.config = json.load(config)
-                print('SettingsManager: SettingsManager Init')
-        except:
-            print("SettingsManager: Cannot open config file")
+        for i in range(0,2):
+            try:
+                with open(self.filename) as config:
+                    self.config = json.load(config)
+                    print('SettingsManager: SettingsManager Init')
+                    break
+            except FileNotFoundError:
+                shutil.copy('settings.template', 'settings.json')
+                print(i)
+            except:
+                print("SettingsManager: Cannot open config file")
 
     def write_config(self):
 
@@ -123,7 +134,7 @@ class SettingsManager:
         # self.config['mqtt_paswd'] = self.mqtt_paswd
         encryptedPwd = checkPaswd(self.mqtt_paswd)
         # if the password was not encrpyted get the encypted one and store it
-        if not encryptedPwd[0]:
+        if not encryptedPwd[0] and encryptedPwd[1]:
             self.mqtt_paswd = encryptedPwd[1].decode('utf-8')
         self.config['mqtt_paswd'] = self.mqtt_paswd
 
@@ -153,7 +164,7 @@ class SettingsManager:
         # self.mqtt_paswd = self.config['mqtt_paswd']
         encryptedPwd = checkPaswd(self.config['mqtt_paswd'])
         # if the password was not encrpyted get the encypted one and store it
-        if not encryptedPwd[0]:
+        if not encryptedPwd[0] and encryptedPwd[1]:
             self.mqtt_paswd = encryptedPwd[1].decode('utf-8')
             self.write_config()
         else:
@@ -193,47 +204,3 @@ class ActiveSettings_Class:
 
 activeSettings = ActiveSettings_Class()
 activeSettings.read()
-
-# print(test.match_device)
-
-# activeSettings = {}
-
-# def load_settings(settings_file):
-#     global settings, defaultInput, defaultOutput, filterInput, ignoreInputs, \
-#             ignoreOutputs, keyMapFile, socket_port, midi_mode, match_device
-#     file = open(settings_file)
-#     settings = json.loads(file.read())
-#     file.close()
-#
-#     keyMapFile = settings['keymap']
-#     defaultInput = settings['default_input']
-#     defaultOutput = settings['default_output']
-#     ignoreInputs = settings['hide_inputs']
-#     ignoreOutputs = settings['hide_outputs']
-#     socket_port = settings['socket_port']
-#     midi_mode = settings['midi_mode']
-#     match_device = settings['match_device']
-#     filterInput.clear()
-#     filterInput.append(defaultInput)
-#
-# def read_settings(settings_file):
-#     file = open(settings_file)
-#     settings = json.loads(file.read())
-#     file.close()
-#     return settings
-#
-# def save_settings(settings_file, new_settings):
-#     settings = new_settings
-#     settings['last_input'] = filterInput
-#     settings['last_output'] = activeOutput
-#     settings['last_keymap'] = keyMapFile
-#
-#     settingsCLASS.last_input = filterInput
-#     settingsCLASS.last_output = activeOutput
-#     settingsCLASS.last_keymap = keyMapFile
-#     settingsCLASS.save_settings()
-#
-#     file = open(settings_file,'w')
-#     file.write(json.dumps(settings))
-#     file.close()
-#     print('MIDI Settings Saved')
