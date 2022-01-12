@@ -90,24 +90,22 @@ class MidiDevice:
         self.sustain_off = []
         self.pitchUp= []
         self.pitchDown= []
-        self.mod= []
-        self.volumeUp = []
-        self.volumeDown = []
+        self.mod_on= []
+        self.mod_off=[]
+        self.volume = []
 
     def load(self):
         with open(MidiDevice.filename, 'r') as config_file:
             MidiDevice.deviceConfigs = json.load(config_file)
             for key in MidiDevice.deviceConfigs:
                 MidiDevice.knowndevices.append(key['device_name'])
-        print(MidiDevice.knowndevices)
 
     def save(self):
     	with open(MidiDevice.filename, 'w') as config_file:
             json.dump(MidiDevice.deviceConfigs, config_file)
 
     def search(self, device_name):
-    	# return result
-    	pass
+    	return MidiDevice.deviceConfigs[MidiDevice.knowndevices.index(device_name)]# return result
 
     def setAttached(self):
     	pass
@@ -118,34 +116,29 @@ class MidiDevice:
         self.save()
 
     def getType(self, device, midi):
-    	deviceMap = search(device)
-    	# find midi pattern in devicemap
-    	# return key
-    	message_type = 'note_on'
-    	return message_type
+        deviceMap = self.search(device)
+        message_type = ''
+        for key in deviceMap:
+            if midi == deviceMap[key]:
+                message_type = key
+        # find midi pattern in devicemap
+        # return key
+        return message_type
 
 devices = MidiDevice()
 devices.load()
-
-
 
 class MidiMessage:
     def __init__(self, message, *type):
         self.indevice=message[0]
         # may need device maps to define channel numbers
-        # get values from MidiDevice#
         if self.indevice in MidiDevice.knowndevices:
             config = MidiDevice.deviceConfigs[MidiDevice.knowndevices.index(self.indevice)]
-            print(config)
         else:
             config = MidiDevice.deviceConfigs[MidiDevice.knowndevices.index('default')]
-            print(config)
         self.midi=message[1]
-        print(self.midi)
-        for i in config:
-            if config[i] == self.midi:
-                self.message_type = i
-                print(self.message_type)
+        config = devices.search(self.indevice)
+        print(devices.getType(self.indevice, self.midi))
         self.channel=self.midi[0] - config['ch_offset']
         self.note=self.midi[1]
         self.velocity=self.midi[2]
@@ -174,7 +167,6 @@ class MidiMessage:
         if type:
             self.message_type = type[0]
         publishQueue.put(['MIDI',str(self.message_type)])
-        print(self.message_type, self.channel, self.note, self.velocity)
 
 class webMidiNote(MidiMessage):
     def __init__(self, message):
@@ -610,50 +602,58 @@ def scan_io(type):
         socketioMessage.send('restart_midi',True)
         print("Exit.")
 
-def mapMode(msg):
+def mapMode(msg, echo):
     filter = ('All' in filterInput) or (msg.indevice in filterInput)
     if msg.velocity > 0 and filter and msg.message_type == 'note_on' and msg.channel > 0:
         socketioMessage.send('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi, 'message_type':msg.message_type}})
         remap = searchKeyMap(mappedkeys, msg.indevice, msg.note, settings['match_device'] == 'True')
 
-        if remap and remap['type'] == "OSC":
-            try:
-                OSC_client = udp_client.SimpleUDPClient(remap['host'], remap['port'])
-                OSC_client.send_message(remap['message'],'')
-                print(f'OSC message {remap["message"]}')
-                socketioMessage.send('midi_sent', {'data': f"Mapped to OSC message {remap['message']}"})
-            except Exception as err:
-                socketioMessage.send('client_msg', f"Error: {remap['host']}:{remap['port']} {err}")
+        if remap:
+            if remap['type'] == "OSC":
+                try:
+                    OSC_client = udp_client.SimpleUDPClient(remap['host'], remap['port'])
+                    OSC_client.send_message(remap['message'],'')
+                    print(f'OSC message {remap["message"]}')
+                    socketioMessage.send('midi_sent', {'data': f"Mapped to OSC message {remap['message']}"})
+                except Exception as err:
+                    socketioMessage.send('client_msg', f"Error: {remap['host']}:{remap['port']} {err}")
 
-        if remap and remap['type'] == "MQTT":
-            try:
-                publishQueue.put([remap['topic'], remap['message']])
-                print(f"MQTT topic {remap['topic']} message {remap['message']}")
-                socketioMessage.send('midi_sent', {'data': f"Mapped to MQTT topic {remap['topic']} message {remap['message']}"})
-            except Exception as err:
-                socketioMessage.send('client_msg', f"Error publishing {err}")
+            if remap['type'] == "MQTT":
+                try:
+                    publishQueue.put([remap['topic'], remap['message']])
+                    print(f"MQTT topic {remap['topic']} message {remap['message']}")
+                    socketioMessage.send('midi_sent', {'data': f"Mapped to MQTT topic {remap['topic']} message {remap['message']}"})
+                except Exception as err:
+                    socketioMessage.send('client_msg', f"Error publishing {err}")
 
-        if activeOutput != 'None':
-            if remap:
-                print(f"Mapping for note {msg.note} on {msg.indevice} found")
-                if remap['type'] == 'PROGRAM_CHANGE':
-                    mw = MidiOutWrapper(midiout, ch=remap['channel'])
-                    mw.send_program_change(remap['value'])
-                    print(f"PC sent channel: {remap['channel']} value: {remap['value']}")
-                    socketioMessage.send('midi_sent', {'data': f"Mapped to PC channel: {remap['channel']} value: {remap['value']}"})
-                elif remap['type'] == 'NOTE_ON':
-                    mw = MidiOutWrapper(midiout, ch=remap['channel'])
-                    mw.send_note_on(remap['new_note'])
-                    # mw.send_note_off(remap['new_note'])
-                    print(f"sent NOTE_ON {remap['new_note']}")
-                    socketioMessage.send('midi_sent', {'data': f"Mapped to NOTE_ON Channel: {remap['channel']} Note: {remap['new_note']}"})
-            else:
+            if activeOutput != 'None':
+                if remap:
+                    print(f"Mapping for note {msg.note} on {msg.indevice} found")
+                    if remap['type'] == 'PROGRAM_CHANGE':
+                        mw = MidiOutWrapper(midiout, ch=remap['channel'])
+                        mw.send_program_change(remap['value'])
+                        print(f"PC sent channel: {remap['channel']} value: {remap['value']}")
+                        socketioMessage.send('midi_sent', {'data': f"Mapped to PC channel: {remap['channel']} value: {remap['value']}"})
+                    elif remap['type'] == 'NOTE_ON':
+                        mw = MidiOutWrapper(midiout, ch=remap['channel'])
+                        mw.send_note_on(remap['new_note'])
+                        # mw.send_note_off(remap['new_note'])
+                        print(f"sent NOTE_ON {remap['new_note']}")
+                        socketioMessage.send('midi_sent', {'data': f"Mapped to NOTE_ON Channel: {remap['channel']} Note: {remap['new_note']}"})
+                else:
+                    mw = MidiOutWrapper(midiout, ch=msg.channel)
+                    mw.send_note_on(msg.note)
+                    print(f"No mapping for note {msg.note} on {msg.indevice} found")
+                    print(f"Sent {msg.note}")
+                    socketioMessage.send('midi_sent', {'data': f"Channel: {msg.channel} Note: {msg.note}"})
+                time.sleep(0.1)
+            if echo:
                 mw = MidiOutWrapper(midiout, ch=msg.channel)
-                mw.send_note_on(msg.note)
-                print(f"No mapping for note {msg.note} on {msg.indevice} found")
-                print(f"Sent {msg.note}")
-                socketioMessage.send('midi_sent', {'data': f"Channel: {msg.channel} Note: {msg.note}"})
-            time.sleep(0.1)
+                mw.send_note_on(msg.note, msg.velocity)
+        else:
+            mw = MidiOutWrapper(midiout, ch=msg.channel)
+            mw.send_note_on(msg.note, msg.velocity)
+            
     elif (msg.velocity > 0) and (not filter) and (not 'None' in filterInput):
         send_ignore(msg.indevice)
 
@@ -701,15 +701,16 @@ def midi_main():
 
     if __name__ != '__main__':
         connectSocket(sio, server_addr, socket_port)
-    elif __name__ == '__main__':
-        print('\n')
-        learn = str(input('Learn MIDI Device? y/n > '))
-        if learn == 'y':
-            learnMidiDevice()
-            pass
-        else:
-            print('\n')
-            pass
+
+    # elif __name__ == '__main__':
+    #     print('\n')
+    #     learn = str(input('Learn MIDI Device? y/n > '))
+    #     if learn == 'y':
+    #         learnMidiDevice()
+    #         pass
+    #     else:
+    #         print('\n')
+    #         pass
 
     # main program
     print("Entering MIDI loop. ")
@@ -717,10 +718,11 @@ def midi_main():
         try:
             while True:
                 timer = time.time()
+                echo = True
                 while midi_mode == 'Mapped':
                     msg = q.get(1)
                     # if msg:
-                    mapMode(msg)
+                    mapMode(msg, echo)
                 while midi_mode == 'Thru':
                     msg = q.get(1)
                     thruMode(msg)
