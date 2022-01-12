@@ -139,8 +139,10 @@
               });
 
             $("#quit").click(function(event) {
-                confirm("You want to Quit MidiMapper?");
-                socket.emit('quit');
+                if (confirm("You want to Quit MidiMapper?")){
+                  socket.emit('quit')
+                }
+                
                 return false;
               });
 

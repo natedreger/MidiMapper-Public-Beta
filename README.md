@@ -29,10 +29,11 @@ Still To Do :
 
 Known Issues to fix :
 - [ ] i\o list not reloading on rescan\restart (settings not pushing???)
-- [ ] settings['match_device'] getting set 'on' not true
 - [ ] match device check on apply_settings
 - [ ] apply settings not right
 - [ ] rescan midi I/O results in corrupt data upon next note (for now midi will be restarted)
+- [x] quit dialog box triggers on cancel
+- [x] settings['match_device'] getting set 'on' not true somewhere
 - [x] web PC not sending in mapped mode
 - [x] ValueError: 'dummy message' is not in list
 - [x] match device not working
