@@ -33,6 +33,7 @@ Known Issues to fix :
 - [ ] match device check on apply_settings
 - [ ] apply settings not right
 - [ ] rescan midi I/O results in corrupt data upon next note (for now midi will be restarted)
+- [x] web PC not sending in mapped mode
 - [x] ValueError: 'dummy message' is not in list
 - [x] match device not working
 - [x] keymap gui not working

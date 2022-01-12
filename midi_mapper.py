@@ -105,7 +105,9 @@ class MidiDevice:
             json.dump(MidiDevice.deviceConfigs, config_file, indent=4)
 
     def search(self, device_name):
-    	return MidiDevice.deviceConfigs[MidiDevice.knowndevices.index(device_name)]# return result
+        try: return MidiDevice.deviceConfigs[MidiDevice.knowndevices.index(device_name)]
+        except ValueError: return MidiDevice.deviceConfigs[MidiDevice.knowndevices.index('default')]
+    # return # return result
 
     def setAttached(self):
     	pass
@@ -121,6 +123,9 @@ class MidiDevice:
         for key in deviceMap:
             if midi == deviceMap[key]:
                 message_type = key
+            else:
+                # some kinda nested if loop
+                pass
         # find midi pattern in devicemap
         # return key
         return message_type
@@ -604,7 +609,7 @@ def scan_io(type):
         print("Exit.")
 
 def mapMode(msg):
-
+    print(msg.indevice, msg.message_type)
     publishQueue.put(['MIDI',f'Received {msg.indevice} {msg.midi}'])
     filter = ('All' in filterInput) or (msg.indevice in filterInput)
     if msg.velocity > 0 and filter and msg.message_type == 'note_on' and msg.channel > 0:
@@ -660,7 +665,11 @@ def mapMode(msg):
             print(f"No mapping for note {msg.note} on {msg.indevice} found")
             print(f"Sent {msg.note}")
             socketioMessage.send('midi_sent', {'data': f"Channel: {msg.channel} Note: {msg.note}"})
-
+    elif msg.message_type == 'program_change':
+        mw = MidiOutWrapper(midiout, ch=msg.channel)
+        mw.send_program_change(msg.note)
+        print(f"PC sent channel: {msg.channel} value: {msg.note}")
+        socketioMessage.send('midi_sent', {'data': f"Mapped to PC channel: {msg.channel} value: {msg.note}"})
     elif (msg.velocity > 0) and (not filter) and (not 'None' in filterInput):
         send_ignore(msg.indevice)
     print('waiting for MIDI input')
