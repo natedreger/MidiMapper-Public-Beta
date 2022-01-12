@@ -1,1 +1,79 @@
-[{"input_device": "USB Keystation 61es", "note": 72, "type": "PROGRAM_CHANGE", "channel": 1, "value": 10, "output_device": "Any"}, {"input_device": "USB Keystation 61es", "note": 74, "type": "PROGRAM_CHANGE", "channel": 2, "value": 11, "output_device": "Any"}, {"input_device": "USB Keystation 61es", "note": 76, "type": "OSC", "message": "/test", "host": "kampkrusty.local", "port": 8000, "output_device": "Any"}, {"input_device": "USB Keystation 61es", "note": 77, "type": "NOTE_ON", "new_note": 44, "channel": 4, "output_device": "any"}, {"input_device": "USB Keystation 61es", "note": 85, "type": "OSC", "message": "/app/Spotify/activate", "host": "kampkrusty.local", "port": 8000, "output_device": "Any"}, {"input_device": "USB Keystation 61es", "note": 87, "type": "OSC", "message": "/app/Spotify/playpause", "host": "kampkrusty.local", "port": 8000, "output_device": "Any"}, {"input_device": "nanoKEY2", "note": 68, "type": "MQTT", "topic": "KampKrusty", "message": "/app/Spotify/activate", "output_device": "Any"}, {"input_device": "nanoKEY2", "note": 70, "type": "MQTT", "topic": "KampKrusty", "message": "/app/Spotify/playpause", "output_device": "Any"}]
+[
+    {
+        "input_device": "USB Keystation 61es",
+        "note": 72,
+        "type": "PROGRAM_CHANGE",
+        "echo": false,
+        "channel": 1,
+        "value": 10,
+        "echo": "on",
+        "output_device": "Any"
+    },
+    {
+        "input_device": "USB Keystation 61es",
+        "note": 74,
+        "type": "PROGRAM_CHANGE",
+        "echo": false,
+        "channel": 2,
+        "value": 11,
+        "output_device": "Any"
+    },
+    {
+        "input_device": "USB Keystation 61es",
+        "note": 76,
+        "type": "OSC",
+        "echo": false,
+        "message": "/test",
+        "echo": false,
+        "host": "kampkrusty.local",
+        "port": 8000,
+        "output_device": "Any"
+    },
+    {
+        "input_device": "USB Keystation 61es",
+        "note": 77,
+        "type": "NOTE_ON",
+        "echo": false,
+        "new_note": 44,
+        "channel": 4,
+        "output_device": "any"
+    },
+    {
+        "input_device": "USB Keystation 61es",
+        "note": 85,
+        "type": "OSC",
+        "echo": false,
+        "message": "/app/Spotify/activate",
+        "host": "kampkrusty.local",
+        "port": 8000,
+        "output_device": "Any"
+    },
+    {
+        "input_device": "USB Keystation 61es",
+        "note": 87,
+        "type": "OSC",
+        "echo": false,
+        "message": "/app/Spotify/playpause",
+        "host": "kampkrusty.local",
+        "port": 8000,
+        "output_device": "Any"
+    },
+    {
+        "input_device": "nanoKEY2",
+        "note": 68,
+        "type": "MQTT",
+        "echo": false,
+        "topic": "KampKrusty",
+        "message": "/app/Spotify/activate",
+        "output_device": "Any"
+    },
+    {
+        "input_device": "nanoKEY2",
+        "note": 70,
+        "type": "MQTT",
+        "echo": true,
+        "topic": "KampKrusty",
+        "message": "/app/Spotify/playpause",
+        "output_device": "Any"
+    }
+]

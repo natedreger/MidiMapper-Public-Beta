@@ -70,7 +70,7 @@
             // The callback function is invoked when a connection with the
             // server is established.
             socket.on('connect', function() {
-                // socket.emit('get_settings', {data: 'I\'m connected!'});
+                socket.emit('get_settings', {data: 'I\'m connected!'});
                 socket.emit('list_keymaps');
             });
 
@@ -171,6 +171,15 @@
                 });
               });
 
+            socket.on('refresh_keymap', function(msg, cb) {
+              keymap = msg
+              $('#log').prepend('<br>' + $('<div/>').text('Keymap Loaded').html());
+
+              $("#keymap").html("");
+              $.each(keymap, function(key,value) {
+                $('#keymap').append('<br>' + $('<div/>').text(key + ': ' + JSON.stringify(value)).html());
+              })
+            })
             // Handlers for the different forms in the page.
             // These accept data from the user and send it to the server in a
             // variety of ways
@@ -215,8 +224,12 @@
             });
 
             $("#new_keymap_file").click(function(event) {
-              let fileName = prompt("Enter Filename without extention", "exampleName");
-              if (fileName != null) {
+              fileName = ''
+              fileName = prompt("Enter Filename without extention", "exampleName");
+              if (availableKeymaps.includes(fileName+'.json')) {
+                fileName = prompt("Name exists, try something else", "");
+              }
+              if (fileName != '') {
                 socket.emit('new_keymap_file', fileName);
               }
               return false;
@@ -229,6 +242,7 @@
                 new_mapping['input_device'] = mapDevice
                 new_mapping['note'] = keyToMap
                 new_mapping['type'] = selValue
+                new_mapping['echo'] = $('#map_echo').is(":checked")
 
                 switch (selValue) {
                   case 'NOTE_ON':
@@ -332,6 +346,8 @@
       </p>
       <p>
         <span> Map to:</span><br>
+        <input type="checkbox" id="map_echo" name="map_echo">
+        <label for="map_echo">Echo MIDI</label><br>
         <select name="map_type" id="map_type">
           <option>Select Type</option>
           <option value="NOTE_ON">NOTE_ON</option>

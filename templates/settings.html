@@ -22,11 +22,11 @@
 
           $('#exact_match').removeAttr('checked');
           $('#default_exact_match').removeAttr('checked');
-          if (match_device == 'on') {
+          if (match_device == true) {
             $('#exact_match').attr('checked', 'checked');
           }
 
-          if (settings['match_device'] == 'on') {
+          if (settings['match_device'] == true) {
             $('#default_exact_match').attr('checked', 'checked');
           };
 
@@ -43,7 +43,9 @@
             // if is checkbox then do Something
             settings[value.name] = value.value
           })
+          settings['match_device'] = $('#default_exact_match').is(":checked")
           socket.emit('save_settings', settings);
+          return false;
         }
 
         $(document).ready(function() {
@@ -70,6 +72,7 @@
             });
 
             socket.on('settings', function(msg, cb) {
+                console.log(msg)
                 availableInputs = msg.availableInputs
                 availableOutputs = msg.availableOutputs
                 activeInput = msg.activeInput
@@ -112,19 +115,21 @@
               });
 
             $("#save_form_settings").click(function(event) {
+                // save_settings()
                 form = document.getElementById('settings_form')
                 $.each(form.elements, function(key, value) {
                   // console.log(value.name + ' ' + value.value)
                   // if is checkbox then do Something
                   settings[value.name] = value.value
                 })
+                settings['match_device'] = $('#default_exact_match').is(":checked")
                 // settings['default_input'] = form.elements['default_input'].value
                 socket.emit('save_settings', settings);
                 return false;
               });
 
             $("#restart_midi").click(function(event) {
-                socket.emit('restart_midi');
+                socket.emit('restart_midi', true);
                 return false;
               });
 

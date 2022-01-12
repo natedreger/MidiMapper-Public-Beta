@@ -102,7 +102,7 @@ class MidiDevice:
 
     def save(self):
     	with open(MidiDevice.filename, 'w') as config_file:
-            json.dump(MidiDevice.deviceConfigs, config_file)
+            json.dump(MidiDevice.deviceConfigs, config_file, indent=4)
 
     def search(self, device_name):
     	return MidiDevice.deviceConfigs[MidiDevice.knowndevices.index(device_name)]# return result
@@ -115,9 +115,9 @@ class MidiDevice:
         MidiDevice.deviceConfigs.append(config)
         self.save()
 
-    def getType(self, device, midi):
+    def getMessageType(self, device, midi):
         deviceMap = self.search(device)
-        message_type = ''
+        message_type = f''
         for key in deviceMap:
             if midi == deviceMap[key]:
                 message_type = key
@@ -137,11 +137,10 @@ class MidiMessage:
         else:
             config = MidiDevice.deviceConfigs[MidiDevice.knowndevices.index('default')]
         self.midi=message[1]
-        config = devices.search(self.indevice)
-        print(devices.getType(self.indevice, self.midi))
         self.channel=self.midi[0] - config['ch_offset']
         self.note=self.midi[1]
         self.velocity=self.midi[2]
+        print(MidiDevice.getMessageType(devices, self.indevice, self.midi))
         if self.channel > 16:
             if self.channel == 33 and self.note == 64 and self.velocity == 127:
                 self.message_type = 'sustain_on'
@@ -166,7 +165,6 @@ class MidiMessage:
             self.message_type = 'note_on'
         if type:
             self.message_type = type[0]
-        publishQueue.put(['MIDI',str(self.message_type)])
 
 class webMidiNote(MidiMessage):
     def __init__(self, message):
@@ -286,6 +284,7 @@ def rescan_io():
 def reload_keymap():
     global mappedkeys
     mappedkeys = getMappedKeys(keyMapFile)
+    socketioMessage.send('refresh_keymap', mappedkeys)
     send_settings()
 
 @sio.on('open_keymap')
@@ -297,6 +296,7 @@ def open_keymap(openMapFile):
     save_midiSetting(settingsFile, settings)
     keyMapFile = openMapFile
     activeSettings.setValue('keyMapFile',keyMapFile)
+    socketioMessage.send('refresh_keymap', mappedkeys)
     send_settings()
 
 @sio.on('set_mode')
@@ -317,6 +317,7 @@ def set_mode(message):
 def exact_match(message):
     global match_device
     match_device = message
+    print(message)
     activeSettings.setValue('match_device', message)
     send_settings()
     print(f"Match device changed to: {match_device}")
@@ -602,11 +603,13 @@ def scan_io(type):
         socketioMessage.send('restart_midi',True)
         print("Exit.")
 
-def mapMode(msg, echo):
+def mapMode(msg):
+
+    publishQueue.put(['MIDI',f'Received {msg.indevice} {msg.midi}'])
     filter = ('All' in filterInput) or (msg.indevice in filterInput)
     if msg.velocity > 0 and filter and msg.message_type == 'note_on' and msg.channel > 0:
         socketioMessage.send('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi, 'message_type':msg.message_type}})
-        remap = searchKeyMap(mappedkeys, msg.indevice, msg.note, settings['match_device'] == 'True')
+        remap = searchKeyMap(mappedkeys, msg.indevice, msg.note, activeSettings.match_device)
 
         if remap:
             if remap['type'] == "OSC":
@@ -647,19 +650,25 @@ def mapMode(msg, echo):
                     print(f"Sent {msg.note}")
                     socketioMessage.send('midi_sent', {'data': f"Channel: {msg.channel} Note: {msg.note}"})
                 time.sleep(0.1)
-            if echo:
+            if remap['echo'] == True:
                 mw = MidiOutWrapper(midiout, ch=msg.channel)
                 mw.send_note_on(msg.note, msg.velocity)
         else:
+            # if note is not remapped, pass Through
             mw = MidiOutWrapper(midiout, ch=msg.channel)
             mw.send_note_on(msg.note, msg.velocity)
-            
+            print(f"No mapping for note {msg.note} on {msg.indevice} found")
+            print(f"Sent {msg.note}")
+            socketioMessage.send('midi_sent', {'data': f"Channel: {msg.channel} Note: {msg.note}"})
+
     elif (msg.velocity > 0) and (not filter) and (not 'None' in filterInput):
         send_ignore(msg.indevice)
+    print('waiting for MIDI input')
 
 
 
 def thruMode(msg):
+    publishQueue.put(['MIDI',f'Received {msg.indevice} {msg.midi}'])
     filter = ('All' in filterInput) or (msg.indevice in filterInput)
     if filter and msg.channel > 0:
         mw = MidiOutWrapper(midiout, ch=msg.channel)
@@ -684,6 +693,7 @@ def thruMode(msg):
             socketioMessage.send('midi_sent', {'data': f"Mapped to PC channel: {msg.channel} value: {msg.note}"})
         else:
             print(msg.message_type)
+    print('waiting for MIDI input')
 
 ############### Main
 
@@ -714,15 +724,16 @@ def midi_main():
 
     # main program
     print("Entering MIDI loop. ")
+    print('waiting for MIDI input')
     try:
         try:
             while True:
                 timer = time.time()
-                echo = True
                 while midi_mode == 'Mapped':
                     msg = q.get(1)
                     # if msg:
-                    mapMode(msg, echo)
+
+                    mapMode(msg)
                 while midi_mode == 'Thru':
                     msg = q.get(1)
                     thruMode(msg)

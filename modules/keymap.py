@@ -73,7 +73,7 @@ def saveKeymap(keyMapFile, map):
 def add_keymap(mapfile, new_map):
     current_keys = getMappedKeys(mapfile)
     current_keys.append(new_map)
-    saveKeymap(mapfile, json.dumps(current_keys))
+    saveKeymap(mapfile, json.dumps(current_keys, indent=4))
 
 def del_keymap(mapfile, note, device):
     new_map={}
@@ -82,7 +82,7 @@ def del_keymap(mapfile, note, device):
     try:
         current_keys = getMappedKeys(mapfile)
         current_keys.pop(getKeyMapIndex(current_keys, new_map))
-        saveKeymap(mapfile, json.dumps(current_keys))
+        saveKeymap(mapfile, json.dumps(current_keys, indent=4))
     except TypeError as err:
         logging.error(f'Error deleting mapped key - {err}')
     except Exception as err:
@@ -92,4 +92,5 @@ def modify_keymap(mapfile, new_map):
     current_keys = getMappedKeys(mapfile)
     getKeyMapIndex(current_keys, new_map)
     current_keys[getKeyMapIndex(current_keys, new_map)] = new_map
-    saveKeymap(mapfile, json.dumps(current_keys))
+    saveKeymap(mapfile, json.dumps(current_keys, indent=4))
+    # json.dumps(parsed, indent=4, sort_keys=True)

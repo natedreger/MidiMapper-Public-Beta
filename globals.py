@@ -139,7 +139,8 @@ class SettingsManager:
         self.config['mqtt_paswd'] = self.mqtt_paswd
 
         with open(self.filename, 'w') as config_file:
-            json.dump(self.config, config_file)
+            json.dump(self.config, config_file, indent=4)
+            # , indent=4
         with open(self.filename, 'r') as config_file:
             self.config = json.load(config_file)
         print("SettingsManager: Settings Saved Successfully")
@@ -185,11 +186,11 @@ class ActiveSettings_Class:
     def __init__(self):
         self.tempFile = 'activeSettings.tmp'
         with open(self.tempFile, 'w') as file:
-            json.dump(vars(self), file)
+            json.dump(vars(self), file, indent=4)
 
     def write(self):
         with open(self.tempFile, 'w') as file:
-            json.dump(vars(self), file)
+            json.dump(vars(self), file, indent=4)
 
     def read(self):
         with open(self.tempFile, 'r') as file:

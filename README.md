@@ -16,6 +16,7 @@ On a more advanced level MidiMapper allows keymaps to be created allowing note o
 MidiMapper also contains a builtin web interface for monitoring and setup.
 
 Still To Do :
+- [ ] loop connection attempts
 - [x] Rotating logs
 - [x] GUI for log management
 - [x] Edit keymap via web interface
@@ -23,19 +24,24 @@ Still To Do :
 - [x] Change midi mode via web interface
 - [x] Match mapping device control
 - [x] remove lag from mode change
-- [ ] encrypt passwords in settings file
-- [ ] loop connection attempts
+- [x] encrypt passwords in settings file
 
 
 Known Issues to fix :
+- [ ] i\o list not reloading on rescan\restart (settings not pushing???)
+- [ ] settings['match_device'] getting set 'on' not true
+- [ ] match device check on apply_settings
+- [ ] apply settings not right
 - [ ] rescan midi I/O results in corrupt data upon next note (for now midi will be restarted)
-- [ ] save settings doesn't save match device
+- [x] ValueError: 'dummy message' is not in list
+- [x] match device not working
+- [x] keymap gui not working
 
 Future features to implement :
 - [ ] note to GPIO
-- [x] OSC to MIDI
 - [ ] Channel Routing
 - [ ] Device to Device mapping
+- [x] OSC to MIDI
 - [X] Logs
 
 
