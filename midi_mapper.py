@@ -608,6 +608,10 @@ def scan_io(type):
         socketioMessage.send('restart_midi',True)
         print("Exit.")
 
+def bypassMode(msg):
+    if msg.message_type != 'note_off':
+        socketioMessage.send('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi, 'message_type':msg.message_type}})
+
 def mapMode(msg):
     print(msg.indevice, msg.message_type)
     publishQueue.put(['MIDI',f'Received {msg.indevice} {msg.midi}'])
@@ -740,12 +744,13 @@ def midi_main():
                 timer = time.time()
                 while midi_mode == 'Mapped':
                     msg = q.get(1)
-                    # if msg:
-
                     mapMode(msg)
                 while midi_mode == 'Thru':
                     msg = q.get(1)
                     thruMode(msg)
+                while midi_mode == 'Bypass':
+                    msg = q.get(1)
+                    bypassMode(msg)
         except Exception as err:
             print(f"{ __name__} - Something Went Wrong with MIDI {err}")
             logs.error(f"{ __name__} - Something Went Wrong with MIDI {err}")

@@ -28,6 +28,7 @@ Still To Do :
 
 
 Known Issues to fix :
+- [ ] knowndevices error if file not exist
 - [ ] i\o list not reloading on rescan\restart (settings not pushing???)
 - [ ] match device check on apply_settings
 - [ ] apply settings not right

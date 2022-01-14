@@ -85,6 +85,7 @@
                   if (msg.data['midi'][2] > 0) {
                     mapDevice = msg.data['device']
                     keyToMap = msg.data['midi'][1]
+                    msgType = msg.data['message_type']
                     $("#press_key").css("display", "none");
                     $("#map_input").css("display", "block");
                     $('#device').text(mapDevice)
@@ -99,25 +100,24 @@
             socket.on('search_keymap_return', function(msg) {
               if (msg) {
                 keyExists = true
-                confirm('Note '+msg['note']+' on '+msg['input_device']+' is already mapped to '+ msg['type'])
-                $("#map_type").val(msg['type'])
-                // $('#'+$el.attr("id")+' option[value="'+activeOption+'"]').attr('selected','selected')
-                show_fields(msg['type'])
-                switch (msg['type']) {
-                  case 'NOTE_ON':
-                    $("#map_channel").val(msg['channel']);
-                    $("#map_note").val(msg['new_note'])
-                  case 'PROGRAM_CHANGE':
-                    $("#map_channel").val(msg['channel']);
-                    $("#map_pc").val(msg['value'])
-                  case 'OSC':
-                    $("#map_osc").val(msg['message'])
-                    $("#osc_host").val(msg['host'])
-                    $("#osc_port").val(msg['port'])
-                  case 'MQTT':
-                    $("#mqtt_topic").val(msg['topic'])
-                    $("#mqtt_message").val(msg['message'])
-
+                if (confirm('Note '+msg['note']+' on '+msg['input_device']+' is already mapped to '+ msg['type'])) {
+                  $("#map_type").val(msg['type'])
+                  show_fields(msg['type'])
+                  switch (msg['type']) {
+                    case 'NOTE_ON':
+                      $("#map_channel").val(msg['channel']);
+                      $("#map_note").val(msg['new_note'])
+                    case 'PROGRAM_CHANGE':
+                      $("#map_channel").val(msg['channel']);
+                      $("#map_pc").val(msg['value'])
+                    case 'OSC':
+                      $("#map_osc").val(msg['message'])
+                      $("#osc_host").val(msg['host'])
+                      $("#osc_port").val(msg['port'])
+                    case 'MQTT':
+                      $("#mqtt_topic").val(msg['topic'])
+                      $("#mqtt_message").val(msg['message'])
+                  }
                 }
               }
             })
@@ -197,6 +197,7 @@
 
             $("#edit_keymap").click(function(event) {
                 mode = "edit"
+                socket.emit('set_mode', 'Bypass')
                 hide_fields()
                 $("#keymap_editor").css("display", "block");
                 return false;
@@ -204,6 +205,7 @@
 
             $("#keymap_done").click(function(event) {
                 mode = "view"
+                socket.emit('set_mode', midi_mode)
                 $("#press_key").css("display", "block");
                 $("#keymap_editor").css("display", "none");
                 $("#map_input").css("display", "none");
