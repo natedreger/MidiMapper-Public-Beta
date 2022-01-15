@@ -20,14 +20,17 @@
           outputOptions = getIOoptions('outputs', availableOutputs)
           build_options($("#default_output"), outputOptions, settings['default_output'])
 
-          $('#exact_match').removeAttr('checked');
-          $('#default_exact_match').removeAttr('checked');
-          if (match_device == true) {
-            $('#exact_match').attr('checked', 'checked');
+          document.getElementById("exact_match").checked = false;
+          document.getElementById("default_exact_match").checked = false;
+
+          if (match_device) {
+            document.getElementById("exact_match").checked = true;
+            // $('#exact_match').attr('checked', 'checked');
           }
 
-          if (settings['match_device'] == true) {
-            $('#default_exact_match').attr('checked', 'checked');
+          if (settings['match_device']) {
+            document.getElementById("default_exact_match").checked = true;
+            // $('#default_exact_match').attr('checked', 'checked');
           };
 
           $('#default_keymap').val(settings['keymap'])
@@ -72,7 +75,7 @@
             });
 
             socket.on('settings', function(msg, cb) {
-                // console.log(msg)
+                console.log(msg)
                 availableInputs = msg.availableInputs
                 availableOutputs = msg.availableOutputs
                 activeInput = msg.activeInput
