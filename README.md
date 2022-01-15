@@ -29,10 +29,11 @@ Still To Do :
 
 Known Issues to fix :
 - [ ] knowndevices error if file not exist
-- [ ] i\o list not reloading on rescan\restart (settings not pushing???)
+- [x] i\o list not reloading on rescan\restart (settings not pushing???)
 - [ ] match device check on apply_settings
 - [ ] apply settings not right
 - [ ] rescan midi I/O results in corrupt data upon next note (for now midi will be restarted)
+- [ ] keymap edit only works when output selected
 - [x] quit dialog box triggers on cancel
 - [x] settings['match_device'] getting set 'on' not true somewhere
 - [x] web PC not sending in mapped mode

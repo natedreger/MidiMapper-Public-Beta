@@ -453,10 +453,7 @@ def send_client_msg(message):
 def send_settings():
     activeSettings.read()
     settingsCLASS.load_config()
-    # sio.emit('setup', {'match_device':match_device, 'midi_mode':midi_mode, 'outputs':filteredOutputList, 'inputs':filteredInputList, \
-    #         'activeOutput':activeOutput, 'activeInput':activeInput,\
-    #         'settings':settingsCLASS.config, 'keymap':mappedkeys, 'keyMapFile':keyMapFile, 'activeSettings':vars(activeSettings)})
-    socketioMessage.send('setup', {'match_device':activeSettings.match_device,'midi_mode':activeSettings.midi_mode, 'availableInputs':activeSettings.availableInputs, 'availableOutputs':activeSettings.availableOutputs, \
+    socketioMessage.send('settings', {'match_device':activeSettings.match_device,'midi_mode':activeSettings.midi_mode, 'availableInputs':activeSettings.availableInputs, 'availableOutputs':activeSettings.availableOutputs, \
                     'activeInput':activeSettings.activeInput, 'activeOutput':activeSettings.activeOutput, 'settings':settingsCLASS.config, 'keymap':activeSettings.keymap, 'keyMapFile':activeSettings.keyMapFile})
 
 def searchIO(type, device):
@@ -721,7 +718,8 @@ def midi_main():
     scan_io('initial')
     setOutput(searchIO('output', defaultOutput))
     searchIO('input', defaultInput)
-
+    send_settings()
+    
     if __name__ != '__main__':
         connectSocket(sio, server_addr, socket_port)
 

@@ -79,8 +79,6 @@ def save_settings(data):
 def send_settings():
     activeSettings.read()
     settingsCLASS.load_config()
-    # socketio.emit('settings', {'match_device':match_device,'midi_mode':midi_mode, 'availableInputs':availableInputs, 'availableOutputs':availableOutputs, \
-    #                 'activeInput':activeInput, 'activeOutput':activeOutput, 'settings':settingsCLASS.config, 'keymap':keymap, 'keyMapFile':keyMapFile, 'activeSettings':vars(activeSettings)})
     socketio.emit('settings', {'match_device':activeSettings.match_device,'midi_mode':activeSettings.midi_mode, 'availableInputs':activeSettings.availableInputs, 'availableOutputs':activeSettings.availableOutputs, \
                     'activeInput':activeSettings.activeInput, 'activeOutput':activeSettings.activeOutput, 'settings':settingsCLASS.config, 'keymap':activeSettings.keymap, 'keyMapFile':activeSettings.keyMapFile})
 
@@ -95,11 +93,6 @@ def server_restarted():
     client_msg('Server has been restarted')
 
 ####################  forward web interface to main app #####################
-
-# @socketio.on('restart_midi')
-# def restart_midi():
-#     client_msg('Sent Restart MIDI')
-#     socketio.emit('restart_midi')
 
 @socketio.on('restart_midi')
 def restart_midi(data):
@@ -176,16 +169,16 @@ def client_msg(message):
 
 @socketio.on('setup')
 def setup(message):
-    global midi_mode, availableInputs, activeOutput, availableOutputs, activeInput, settings, keymap, match_device, keyMapFile
-    availableInputs = message['inputs']
-    activeOutput = message['activeOutput']
-    availableOutputs = message['outputs']
-    activeInput = message['activeInput']
-    settings = message['settings']
-    keymap = message['keymap']
-    midi_mode = message['midi_mode']
-    match_device = message['match_device']
-    keyMapFile = message['keyMapFile']
+    # global midi_mode, availableInputs, activeOutput, availableOutputs, activeInput, settings, keymap, match_device, keyMapFile
+    # availableInputs = message['inputs']
+    # activeOutput = message['activeOutput']
+    # availableOutputs = message['outputs']
+    # activeInput = message['activeInput']
+    # settings = message['settings']
+    # keymap = message['keymap']
+    # midi_mode = message['midi_mode']
+    # match_device = message['match_device']
+    # keyMapFile = message['keyMapFile']
     send_settings()
 
 @socketio.on('io_set')
@@ -302,6 +295,6 @@ def server_main(settings_file):
         socketio.run(app=app, host='0.0.0.0', port=socket_port)
     except KeyboardInterrupt:
         pass
-        
+
 if __name__ == "__main__":
     server_main()

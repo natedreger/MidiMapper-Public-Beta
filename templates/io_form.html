@@ -1,18 +1,20 @@
 <!-- io_form.html -->
 <script src="static/js/functions.js"></script>
 <script>
+
   $(document).ready(function() {
       // Connect to the Socket.IO server.
       // The connection URL has the following format, relative to the current page:
       //     http[s]://<domain>:<port>[/<namespace>]
       var socket = io();
-
       // Event handler for new connections.
       // The callback function is invoked when a connection with the
       // server is established.
+
       socket.on('connect', function() {
           socket.emit('get_settings', {data: 'I\'m connected!'});
       });
+
       socket.on('settings', function(msg, cb) {
           midi_mode = msg.midi_mode
           availableInputs = msg.availableInputs
@@ -40,6 +42,15 @@
               cb();
       });
 
+      socket.on('refresh_page', function(msg, cb) {
+        // build the input list
+        inputOptions = getIOoptions('inputs', availableInputs)
+        build_options($("#inputs"), inputOptions, activeInput)
+
+        // build the output list
+        outputOptions = getIOoptions('outputs', availableOutputs)
+        build_options($("#outputs"), outputOptions, activeOutput)
+      })
 
       $('form#io').submit(function(event) {
           temp = [$('#inputs').val(), $('#outputs').val()]

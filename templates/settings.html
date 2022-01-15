@@ -72,7 +72,7 @@
             });
 
             socket.on('settings', function(msg, cb) {
-                console.log(msg)
+                // console.log(msg)
                 availableInputs = msg.availableInputs
                 availableOutputs = msg.availableOutputs
                 activeInput = msg.activeInput
@@ -142,7 +142,7 @@
                 if (confirm("You want to Quit MidiMapper?")){
                   socket.emit('quit')
                 }
-                
+
                 return false;
               });
 
