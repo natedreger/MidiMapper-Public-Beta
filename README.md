@@ -17,6 +17,9 @@ MidiMapper also contains a builtin web interface for monitoring and setup.
 
 Still To Do :
 - [ ] loop connection attempts
+- [ ] keymap needs to track channel and message_type
+- [ ] keymap edit same note on two devices
+- [ ] host management (reboot and shutdown)
 - [x] Rotating logs
 - [x] GUI for log management
 - [x] Edit keymap via web interface
@@ -42,6 +45,7 @@ Known Issues to fix :
 - [x] keymap gui not working
 
 Future features to implement :
+- [ ] gui for wifi connection
 - [ ] note to GPIO
 - [ ] Channel Routing
 - [ ] Device to Device mapping

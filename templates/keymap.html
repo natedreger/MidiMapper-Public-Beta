@@ -61,6 +61,7 @@
             // var socket = io();
             var mapDevice = ""
             var keyToMap = ""
+            var chToMap = ""
             var keyMapFile = ""
             var keymap = []
             var mode = "view"
@@ -85,6 +86,7 @@
                   if (msg.data['midi'][2] > 0) {
                     mapDevice = msg.data['device']
                     keyToMap = msg.data['midi'][1]
+                    chToMap = msg.data['midi'][0]
                     msgType = msg.data['message_type']
                     $("#press_key").css("display", "none");
                     $("#map_input").css("display", "block");

@@ -719,7 +719,7 @@ def midi_main():
     setOutput(searchIO('output', defaultOutput))
     searchIO('input', defaultInput)
     send_settings()
-    
+
     if __name__ != '__main__':
         connectSocket(sio, server_addr, socket_port)
 
