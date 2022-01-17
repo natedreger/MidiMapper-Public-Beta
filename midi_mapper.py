@@ -611,7 +611,7 @@ def bypassMode(msg):
 
 def mapMode(msg):
     print(msg.indevice, msg.message_type)
-    publishQueue.put(['MIDI',f'Received {msg.indevice} {msg.midi}'])
+    # publishQueue.put(['MIDI',f'Received {msg.indevice} {msg.midi}'])
     filter = ('All' in filterInput) or (msg.indevice in filterInput)
     if msg.velocity > 0 and filter and msg.message_type == 'note_on' and msg.channel > 0:
         socketioMessage.send('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi, 'message_type':msg.message_type}})
@@ -678,7 +678,7 @@ def mapMode(msg):
 
 
 def thruMode(msg):
-    publishQueue.put(['MIDI',f'Received {msg.indevice} {msg.midi}'])
+    # publishQueue.put(['MIDI',f'Received {msg.indevice} {msg.midi}'])
     filter = ('All' in filterInput) or (msg.indevice in filterInput)
     if filter and msg.channel > 0:
         mw = MidiOutWrapper(midiout, ch=msg.channel)

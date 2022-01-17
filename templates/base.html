@@ -4,12 +4,18 @@
 <html lang="en">
  <head>
   <title>Midi Monitor</title>
+  <script src="static/js/jquery-3.6.0.min.js"></script>
+  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script> -->
+  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js" integrity="sha512-aMGMvNYu8Ue4G+fHa359jcPb1u+ytAF+P2SCb+PxrjCdO3n3ZTxJ30zuH39rimUggmTwmh2u7wvQsDTHESnmfQ==" crossorigin="anonymous"></script> -->
+  <script src="static/js/socket.io.js"></script>
+  <script src="static/js/functions.js"></script>
+  <script src="static/js/bootstrap/bootstrap.bundle.min.js"></script>
+  <link href="static/css/bootstrap/bootstrap.min.css" rel="stylesheet" >
  </head>
 
- <!-- public_header.html -->
- <h1 class="display-4" align="center" style="padding-top:20px; cursor: pointer;" onclick="window.location='{{url_for('index')}}';">MIDI Monitor</h1>
+ <h2 align="center" style="padding-top:10px; cursor: pointer;" onclick="window.location='{{url_for('index')}}';">MIDI Mapper</h1>
 
- <header class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-body border-bottom shadow-sm">
+ <header class="align-items-center p-3 px-md-1 mb-3 bg-body border-bottom shadow-sm">
    <p class="h5 my-0 me-md-auto fw-normal"></p>
    <nav class="my-2 my-md-0 me-md-3">
      <a class="p-2 text-dark" href="{{url_for('index')}}">Monitor</a>
@@ -23,7 +29,7 @@
 {% endblock main %}
 <!-- resume base.html -->
 {% block footer %}
-<div id="version">
+<div style="padding:20px" id="version">
   Software version: {{ version }}
 </div>
 {% endblock footer%}

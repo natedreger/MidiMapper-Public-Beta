@@ -3,9 +3,9 @@
 {% block main%}<html>
 <head>
     <title>MIDI Monitor - Keymap Editor</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js" integrity="sha512-aMGMvNYu8Ue4G+fHa359jcPb1u+ytAF+P2SCb+PxrjCdO3n3ZTxJ30zuH39rimUggmTwmh2u7wvQsDTHESnmfQ==" crossorigin="anonymous"></script>
-    <script src="static/js/functions.js"></script>
+    <script src="static/js/functions.js"></script> -->
     <script type="text/javascript" charset="utf-8">
 
         function hide_fields() {
@@ -213,6 +213,7 @@
                 $("#map_input").css("display", "none");
                 $("#map_type").val('Select Type');
                 clear_fields()
+                socket.emit('get_keymap')
                 return false;
               });
 
@@ -274,8 +275,8 @@
                 else {
                   socket.emit('modify_mapping', keyMapFile, new_mapping);
                 }
-                socket.emit('get_keymap');
                 clear_fields()
+                socket.emit('get_keymap');
                 return false;
               });
 
@@ -302,9 +303,10 @@
 </head>
 
 <body>
-    <h1>Keymap</h1>
+  <div style="padding-left:20px">
+    <h3>Keymap</h3>
     {% include "io_form.html" %}
-    <h2>Send:</h2>
+    <h4>Send:</h4>
     <form id="sendmidinote" method="POST" action='#'>
         <select name="note_channel" id="note_channel">
           {% for n in range(1,17) %}
@@ -393,10 +395,11 @@
       <input type="button" id="save_keymap" value="Save">
       <input type="button" id="keymap_done" value="Done">
     </div>
-    <h2>Keymap:</h2>
+    <h3>Keymap:</h3>
     <div id="keymap"></div>
-    <h2>Info:</h2>
+    <h4>Info:</h4>
     <div id="log"></div>
+  </div>
 </body>
 </html>
 
