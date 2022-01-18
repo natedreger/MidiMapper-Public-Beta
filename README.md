@@ -31,10 +31,10 @@ Still To Do :
 
 
 Known Issues to fix :
-- [ ] remove mqtt publish all midi
 - [ ] keymaps don't reload on update
 - [ ] knowndevices error if file not exist
 - [ ] rescan midi I/O results in corrupt data upon next note (for now midi will be restarted)
+- [x] remove mqtt publish all midi
 - [x] i\o list not reloading on rescan\restart (settings not pushing???)
 - [x] match device check on apply_settings
 - [x] apply settings not right
