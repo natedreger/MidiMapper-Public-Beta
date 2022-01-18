@@ -31,6 +31,7 @@ Still To Do :
 
 
 Known Issues to fix :
+- [ ] keymaps in activesettings getting corrupted (rework how gui gets the keymap)
 - [ ] keymaps don't reload on update
 - [ ] knowndevices error if file not exist
 - [ ] rescan midi I/O results in corrupt data upon next note (for now midi will be restarted)

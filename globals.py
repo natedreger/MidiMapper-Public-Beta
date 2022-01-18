@@ -96,6 +96,17 @@ def connectSocket(socketName, socket_addr, socket_port):
             connected = True
 
 ############## Classes ##########################
+class socketioMessage_Class():
+    def __init__(self):
+        self.handle = ''
+        self.data = ''
+        pass
+    def send(self, handle, data):
+        self.handle = handle
+        self.data = data
+        socketioMessageQueue.put(vars(self))
+
+socketioMessage = socketioMessage_Class()
 
 class SettingsManager:
     def __init__(self, file):

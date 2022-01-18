@@ -80,7 +80,7 @@ def send_settings():
     activeSettings.read()
     settingsCLASS.load_config()
     socketio.emit('settings', {'match_device':activeSettings.match_device,'midi_mode':activeSettings.midi_mode, 'availableInputs':activeSettings.availableInputs, 'availableOutputs':activeSettings.availableOutputs, \
-                    'activeInput':activeSettings.activeInput, 'activeOutput':activeSettings.activeOutput, 'settings':settingsCLASS.config, 'keymap':activeSettings.keymap, 'keyMapFile':activeSettings.keyMapFile})
+                    'activeInput':activeSettings.activeInput, 'activeOutput':activeSettings.activeOutput, 'settings':settingsCLASS.config, 'keyMapFile':activeSettings.keyMapFile})
 
 ################# forward main app to web interface #########################
 

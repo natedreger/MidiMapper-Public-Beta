@@ -19,6 +19,7 @@ def loadKeyMap(keyMapFile):
     except Exception as err:
         print(f'Error loading keymap - {err}')
         logging.error(f'Error loading keymap - {err}')
+        socketioMessage.send('client_msg', f'Error loading keymap: {err}')
         # message_buffer.append(f'Error loading keymap - {err}')
         map = False
     activeSettings.setValue('keyMapFile', keyMapFile)
@@ -28,7 +29,8 @@ def getMappedKeys(key_map):
     global mappedkeys
     tempKeys = loadKeyMap(key_map)
     mappedkeys = tempKeys
-    activeSettings.setValue('keymap', loadKeyMap(key_map))
+    # activeSettings.setValue('keymap', mappedkeys)
+    # activeSettings.setValue('keymap', loadKeyMap(key_map))
     return mappedkeys
 
 def searchKeyMap(mappedkeys, device, note, exact):
@@ -66,16 +68,19 @@ def saveKeymap(keyMapFile, map):
         f.write(map)
         f.close()
     except Exception as err:
-        print(f'Error loading keymap - {err}')
-        logging.error(f'Error loading keymap - {err}')
+        print(f'Error saving keymap - {err}')
+        socketioMessage.send('client_msg', f'Error saving keymap: {err}')
+        logging.error(f'Error saving keymap - {err}')
         # message_buffer.append(f'Error loading keymap - {err}')
 
 def add_keymap(mapfile, new_map):
+    print('!!!!!!!!!!!!!!!!!!!!! ADD !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
     current_keys = getMappedKeys(mapfile)
     current_keys.append(new_map)
     saveKeymap(mapfile, json.dumps(current_keys, indent=4))
 
 def del_keymap(mapfile, note, device):
+    print('!!!!!!!!!!!!!!!!!!!!! DELETE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
     new_map={}
     new_map['note'] = note
     new_map['input_device'] = device
@@ -84,13 +89,22 @@ def del_keymap(mapfile, note, device):
         current_keys.pop(getKeyMapIndex(current_keys, new_map))
         saveKeymap(mapfile, json.dumps(current_keys, indent=4))
     except TypeError as err:
+        socketioMessage.send('client_msg', f'TypeError while deleting: {err}')
         logging.error(f'Error deleting mapped key - {err}')
     except Exception as err:
+        socketioMessage.send('client_msg', f'Error while deleting: {err}')
         logging.error(f'Error deleting mapped key - {err}')
 
 def modify_keymap(mapfile, new_map):
+    print('!!!!!!!!!!!!!!!!!!!!! MODIFY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
     current_keys = getMappedKeys(mapfile)
-    getKeyMapIndex(current_keys, new_map)
-    current_keys[getKeyMapIndex(current_keys, new_map)] = new_map
-    saveKeymap(mapfile, json.dumps(current_keys, indent=4))
-    # json.dumps(parsed, indent=4, sort_keys=True)
+    try:
+        getKeyMapIndex(current_keys, new_map)
+        current_keys[getKeyMapIndex(current_keys, new_map)] = new_map
+        saveKeymap(mapfile, json.dumps(current_keys, indent=4))
+    except TypeError as err:
+        socketioMessage.send('client_msg', f'TypeError while modifying: {err}')
+        logging.error(f'Error modifying mapped key - {err}')
+    except Exception as err:
+        socketioMessage.send('client_msg', f'Error while modifying: {err}')
+        logging.error(f'Error modifying mapped key - {err}')

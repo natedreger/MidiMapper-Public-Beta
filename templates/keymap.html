@@ -69,6 +69,7 @@
             var availableKeymaps = []
             // Event handler for new connections.
             // The callback function is invoked when a connection with the
+            socket.emit('get_keymap')
             // server is established.
             socket.on('connect', function() {
                 socket.emit('get_settings', {data: 'I\'m connected!'});
@@ -162,7 +163,7 @@
                 activeInput = msg.activeInput
                 activeOutput = msg.activeOutput
                 settings = msg.settings
-                keymap = msg.keymap
+                // keymap = msg.keymap
                 keyMapFile = msg.keyMapFile
 
                 $('#log').prepend('<br>' + $('<div/>').text('Keymap Loaded').html());
@@ -175,6 +176,7 @@
 
             socket.on('refresh_keymap', function(msg, cb) {
               keymap = msg
+              console.log(msg)
               $('#log').prepend('<br>' + $('<div/>').text('Keymap Loaded').html());
 
               $("#keymap").html("");
@@ -198,6 +200,7 @@
 
 
             $("#edit_keymap").click(function(event) {
+                keyExists = false
                 mode = "edit"
                 socket.emit('set_mode', 'Bypass')
                 hide_fields()
@@ -213,7 +216,8 @@
                 $("#map_input").css("display", "none");
                 $("#map_type").val('Select Type');
                 clear_fields()
-                socket.emit('get_keymap')
+                // socket.emit('get_keymap')
+                keyExists = false
                 return false;
               });
 
@@ -276,6 +280,7 @@
                   socket.emit('modify_mapping', keyMapFile, new_mapping);
                 }
                 clear_fields()
+                hide_fields()
                 socket.emit('get_keymap');
                 return false;
               });

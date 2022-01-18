@@ -22,7 +22,7 @@ from modules.midioutwrapper import MidiOutWrapper
 from modules.probe_ports import probe_ports, getAvailableIO
 from modules.logger import *
 from modules.keymap import getMappedKeys, searchKeyMap
-from globals import owner, connectSocket, publishQueue, settingsCLASS, activeSettings, socketioMessageQueue
+from globals import *# owner, connectSocket, publishQueue, settingsCLASS, activeSettings, socketioMessageQueue
 
 keyMapFile = 'default.json'
 settingsFile = 'settings.json'
@@ -200,17 +200,17 @@ class webPCNote(MidiMessage):
 
 
 ################ socket IO #######################3
-class socketioMessage_Class():
-    def __init__(self):
-        self.handle = ''
-        self.data = ''
-        pass
-    def send(self, handle, data):
-        self.handle = handle
-        self.data = data
-        socketioMessageQueue.put(vars(self))
-
-socketioMessage = socketioMessage_Class()
+# class socketioMessage_Class():
+#     def __init__(self):
+#         self.handle = ''
+#         self.data = ''
+#         pass
+#     def send(self, handle, data):
+#         self.handle = handle
+#         self.data = data
+#         socketioMessageQueue.put(vars(self))
+#
+# socketioMessage = socketioMessage_Class()
 
 @sio.event
 def connect():
@@ -454,7 +454,7 @@ def send_settings():
     activeSettings.read()
     settingsCLASS.load_config()
     socketioMessage.send('settings', {'match_device':activeSettings.match_device,'midi_mode':activeSettings.midi_mode, 'availableInputs':activeSettings.availableInputs, 'availableOutputs':activeSettings.availableOutputs, \
-                    'activeInput':activeSettings.activeInput, 'activeOutput':activeSettings.activeOutput, 'settings':settingsCLASS.config, 'keymap':activeSettings.keymap, 'keyMapFile':activeSettings.keyMapFile})
+                    'activeInput':activeSettings.activeInput, 'activeOutput':activeSettings.activeOutput, 'settings':settingsCLASS.config, 'keyMapFile':activeSettings.keyMapFile})
 
 def searchIO(type, device):
     global message_buffer, activeInput, activeOutput
