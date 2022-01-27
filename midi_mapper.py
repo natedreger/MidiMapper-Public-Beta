@@ -666,7 +666,9 @@ def mapMode(msg):
             if remap['echo'] == True:
                 mw = MidiOutWrapper(midiout, ch=msg.channel)
                 mw.send_note_on(msg.note, msg.velocity)
+
         else:
+            # this is in the wrong spot??? note is sending with midi out set to none
             # if note is not remapped, pass Through
             mw = MidiOutWrapper(midiout, ch=msg.channel)
             mw.send_note_on(msg.note, msg.velocity)
@@ -674,13 +676,14 @@ def mapMode(msg):
             print(f"Sent {msg.note}")
             socketioMessage.send('midi_sent', {'data': f"Channel: {msg.channel} Note: {msg.note}"})
             ledQueue.put('led1.orange()')
+
     elif msg.message_type == 'program_change':
         ledQueue.put('!!!!!!!!!! PC IN MAPPED BLUE !!!!')
         mw = MidiOutWrapper(midiout, ch=msg.channel)
         mw.send_program_change(msg.note)
         print(f"PC sent channel: {msg.channel} value: {msg.note}")
         socketioMessage.send('midi_sent', {'data': f"Mapped to PC channel: {msg.channel} value: {msg.note}"})
-        ledQueue.put(led1.orange())
+        ledQueue.put('led1.orange()')
     elif (msg.velocity > 0) and (not filter) and (not 'None' in filterInput):
         send_ignore(msg.indevice)
     ledQueue.put('led1.green()')
@@ -693,7 +696,7 @@ def thruMode(msg):
     # publishQueue.put(['MIDI',f'Received {msg.indevice} {msg.midi}'])
     filter = ('All' in filterInput) or (msg.indevice in filterInput)
     if filter and msg.channel > 0:
-        ledQueue.put('!!!!!!!!!! TOP MIDI Through BLUE !!!!')
+        ledQueue.put('led1.blue()')
         mw = MidiOutWrapper(midiout, ch=msg.channel)
         socketioMessage.send('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi, 'message_type':msg.message_type}})
         if msg.message_type == 'note_on':
@@ -701,27 +704,26 @@ def thruMode(msg):
             mw.send_note_on(msg.note, msg.velocity)
             print(f"Sent {msg.note} on Channel: {msg.channel}")
             socketioMessage.send('midi_sent', {'data': f"{msg.message_type} Channel: {msg.channel} Note: {msg.note}"})
-            # led1.orange()
+            ledQueue.put('led1.orange()')
         elif msg.message_type == 'note_off':
             mw.send_note_off(msg.note)
             socketioMessage.send('midi_sent', {'data': f"{msg.message_type} Channel: {msg.channel} Note: {msg.note}"})
-            # led1.orange()
+            ledQueue.put('led1.orange()')
         elif msg.message_type == 'sustain':
             # mw = MidiOutWrapper(midiout, ch=msg.channel)
             mw.send_control_change(64, msg.velocity, ch=msg.channel)
             print(f"Sent sustain on Channel: {msg.channel}")
             socketioMessage.send('midi_sent', {'data': f"Sent sustain on Channel: {msg.channel}"})
-            # led1.orange()
+            ledQueue.put('led1.orange()')
         elif msg.message_type == 'program_change':
             # mw = MidiOutWrapper(midiout, ch=msg.channel)
             mw.send_program_change(msg.note)
             print(f"PC sent channel: {msg.channel} value: {msg.note}")
             socketioMessage.send('midi_sent', {'data': f"Mapped to PC channel: {msg.channel} value: {msg.note}"})
-            # led1.orange()
+            ledQueue.put('led1.orange()')
         else:
             print(msg.message_type)
-    # led1.green()
-    ledQueue.put('!!!!!!!!!! END OF MIDI THRU GREEEN !!!!')
+    ledQueue.put('led1.green()')
     print('waiting for MIDI input')
 
 ############### Main
