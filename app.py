@@ -20,7 +20,7 @@ import socketio
 import threading
 from multiprocessing import Process
 
-from globals import owner, VERSION, SETTINGS_FILE, settingsCLASS
+from globals import owner, VERSION, SETTINGS_FILE, settingsCLASS, ledQueue
 from modules.logger import *
 from web_interface import server_main
 from midi_mapper import midi_main, end_MIDI
@@ -46,6 +46,7 @@ def connect():
 
 @sio2.on('restart_midi')
 def restart_midi(data):
+    ledQueue.put("led1.pulseSlow('yellow')")
     print('Restarting MIDI')
     time.sleep(0.1)
     for midi_process in midi_processes:
@@ -60,6 +61,7 @@ def restart_midi(data):
 
 @sio2.on('restart_server')
 def restart_server():
+    ledQueue.put("led1.pulseSlow('yellow')")
     print('Restarting Server')
     load_settings()
     time.sleep(1.0)

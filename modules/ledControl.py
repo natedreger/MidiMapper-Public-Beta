@@ -65,12 +65,6 @@ class customRGBLED(RGBLED):
     def pulseFast(self, color):
         self.light.pulse(.75, .75, on_color=Color(color), background=True)
 
-def myFunc():
-    print('This is a function.')
-
-def myFunc2():
-    print('This is another function.')
-
 def ledQueueHandler():
     led1 = customRGBLED(17,27,22)
     led1.pulseFast('yellow')
@@ -78,6 +72,5 @@ def ledQueueHandler():
         try:
             ledCmd = ledQueue.get(1)
             eval(ledCmd)
-            sleep(.5)
-            # led1.pulseSlow('green')
+            sleep(.25)
         except: pass
