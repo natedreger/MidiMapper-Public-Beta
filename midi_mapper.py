@@ -136,7 +136,6 @@ devices.load()
 class MidiMessage:
     def __init__(self, message, *type):
         # led1.blue()
-        ledQueue.put('!!!!!!!!!! BLUE !!!!')
         self.indevice=message[0]
         # may need device maps to define channel numbers
         if self.indevice in MidiDevice.knowndevices:
@@ -616,6 +615,7 @@ def mapMode(msg):
     # publishQueue.put(['MIDI',f'Received {msg.indevice} {msg.midi}'])
     filter = ('All' in filterInput) or (msg.indevice in filterInput)
     if msg.velocity > 0 and filter and msg.message_type == 'note_on' and msg.channel > 0:
+        ledQueue.put('led1.blue()')
         socketioMessage.send('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi, 'message_type':msg.message_type}})
         remap = searchKeyMap(mappedkeys, msg.indevice, msg.note, activeSettings.match_device)
 
@@ -626,7 +626,7 @@ def mapMode(msg):
                     OSC_client.send_message(remap['message'],'')
                     print(f'OSC message {remap["message"]}')
                     socketioMessage.send('midi_sent', {'data': f"Mapped to OSC message {remap['message']}"})
-                    # led1.orange()
+                    ledQueue.put('led1.orange()')
                 except Exception as err:
                     socketioMessage.send('client_msg', f"Error: {remap['host']}:{remap['port']} {err}")
 
@@ -635,7 +635,7 @@ def mapMode(msg):
                     publishQueue.put([remap['topic'], remap['message']])
                     print(f"MQTT topic {remap['topic']} message {remap['message']}")
                     socketioMessage.send('midi_sent', {'data': f"Mapped to MQTT topic {remap['topic']} message {remap['message']}"})
-                    # led1.orange()
+                    ledQueue.put('led1.orange()')
                 except Exception as err:
                     socketioMessage.send('client_msg', f"Error publishing {err}")
 
@@ -647,21 +647,21 @@ def mapMode(msg):
                         mw.send_program_change(remap['value'])
                         print(f"PC sent channel: {remap['channel']} value: {remap['value']}")
                         socketioMessage.send('midi_sent', {'data': f"Mapped to PC channel: {remap['channel']} value: {remap['value']}"})
-                        # led1.orange()
+                        ledQueue.put('led1.orange()')
                     elif remap['type'] == 'NOTE_ON':
                         mw = MidiOutWrapper(midiout, ch=remap['channel'])
                         mw.send_note_on(remap['new_note'])
                         # mw.send_note_off(remap['new_note'])
                         print(f"sent NOTE_ON {remap['new_note']}")
                         socketioMessage.send('midi_sent', {'data': f"Mapped to NOTE_ON Channel: {remap['channel']} Note: {remap['new_note']}"})
-                        # led1.orange()
+                        ledQueue.put('led1.orange()')
                 else:
                     mw = MidiOutWrapper(midiout, ch=msg.channel)
                     mw.send_note_on(msg.note)
                     print(f"No mapping for note {msg.note} on {msg.indevice} found")
                     print(f"Sent {msg.note}")
                     socketioMessage.send('midi_sent', {'data': f"Channel: {msg.channel} Note: {msg.note}"})
-                    # led1.orange()
+                    ledQueue.put('led1.orange()')
                 time.sleep(0.1)
             if remap['echo'] == True:
                 mw = MidiOutWrapper(midiout, ch=msg.channel)
@@ -673,17 +673,18 @@ def mapMode(msg):
             print(f"No mapping for note {msg.note} on {msg.indevice} found")
             print(f"Sent {msg.note}")
             socketioMessage.send('midi_sent', {'data': f"Channel: {msg.channel} Note: {msg.note}"})
-            # led1.orange()
+            ledQueue.put('led1.orange()')
     elif msg.message_type == 'program_change':
+        ledQueue.put('!!!!!!!!!! PC IN MAPPED BLUE !!!!')
         mw = MidiOutWrapper(midiout, ch=msg.channel)
         mw.send_program_change(msg.note)
         print(f"PC sent channel: {msg.channel} value: {msg.note}")
         socketioMessage.send('midi_sent', {'data': f"Mapped to PC channel: {msg.channel} value: {msg.note}"})
-        # led1.orange()
+        ledQueue.put(led1.orange())
     elif (msg.velocity > 0) and (not filter) and (not 'None' in filterInput):
         send_ignore(msg.indevice)
-    # led1.green()
-    ledQueue.put('!!!!!!!!!! GREEEN !!!!')
+    ledQueue.put('led1.green()')
+    # ledQueue.put('!!!!!!!!!! END MAPPED GREEEN !!!!')
     print('waiting for MIDI input')
 
 
@@ -692,6 +693,7 @@ def thruMode(msg):
     # publishQueue.put(['MIDI',f'Received {msg.indevice} {msg.midi}'])
     filter = ('All' in filterInput) or (msg.indevice in filterInput)
     if filter and msg.channel > 0:
+        ledQueue.put('!!!!!!!!!! TOP MIDI Through BLUE !!!!')
         mw = MidiOutWrapper(midiout, ch=msg.channel)
         socketioMessage.send('midi_msg', {'data': {'device':msg.indevice, 'midi':msg.midi, 'message_type':msg.message_type}})
         if msg.message_type == 'note_on':
@@ -719,7 +721,7 @@ def thruMode(msg):
         else:
             print(msg.message_type)
     # led1.green()
-    ledQueue.put('!!!!!!!!!! GREEEN !!!!')
+    ledQueue.put('!!!!!!!!!! END OF MIDI THRU GREEEN !!!!')
     print('waiting for MIDI input')
 
 ############### Main
@@ -753,11 +755,11 @@ def midi_main():
     # main program
     print("Entering MIDI loop. ")
     print('waiting for MIDI input')
+    ledQueue.put('led1.green()')
     try:
         try:
             while True:
                 # led1.green()
-                ledQueue.put('!!!!!!!!!! GREEEN !!!!')
                 timer = time.time()
                 while midi_mode == 'Mapped':
                     msg = q.get(1)

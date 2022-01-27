@@ -1,6 +1,7 @@
 
 from gpiozero import RGBLED
 from colorzero import Color
+from time import sleep
 import sys
 import threading
 from globals import ledQueue
@@ -46,8 +47,10 @@ class customRGBLED(RGBLED):
         self.light.color = Color('green')
     def red(self):
         self.light.color = Color('red')
+        print(f'!!!!!!!!!!! LED is red !!!!!!!')
     def yellow(self):
         self.light.color = Color('yellow')
+        print(f'!!!!!!!!!!! LED is yellow !!!!!!!')
     def orange(self):
         print(f'!!!!!!!!!!! LED is orange !!!!!!!')
         self.light.color = Color('orange')
@@ -62,17 +65,19 @@ class customRGBLED(RGBLED):
     def pulseFast(self, color):
         self.light.pulse(.75, .75, on_color=Color(color), background=True)
 
+def myFunc():
+    print('This is a function.')
+
+def myFunc2():
+    print('This is another function.')
+
 def ledQueueHandler():
-    global led1
     led1 = customRGBLED(17,27,22)
-    led1.pulseFast('red')
+    led1.pulseFast('yellow')
     while True:
         try:
             ledCmd = ledQueue.get(1)
-            print(ledCmd)
-            led1.off()
-            sleep(5)
-            led1.pulseFast('green')
-            print(ledCmd)
-            # ledCmd = ledQueue.popleft()
+            eval(ledCmd)
+            sleep(.5)
+            # led1.pulseSlow('green')
         except: pass
