@@ -64,6 +64,8 @@ class customRGBLED(RGBLED):
 
 def ledQueueHandler():
     global led1
+    led1 = customRGBLED(17,27,22)
+    led1.pulseFast('red')
     while True:
         try:
             ledCmd = ledQueue.get(1)
@@ -74,10 +76,3 @@ def ledQueueHandler():
             print(ledCmd)
             # ledCmd = ledQueue.popleft()
         except: pass
-
-def ledMain():
-    global led1
-    ledThreadListener = threading.Thread(target=ledQueueHandler)
-    ledThreadListener.start()
-    led1 = customRGBLED(17,27,22)
-    led1.pulseFast('red')

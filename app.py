@@ -118,7 +118,7 @@ def terminateProcesses():
 load_settings()
 
 # Create initial MIDI and server processes
-ledThread = threading.Thread(target=ledMain)
+ledThread = threading.Thread(target=ledQueueHandler)
 midi_processes.append(Process(target=midi_main,))
 server_processes.append(Process(target=server_main, args=(SETTINGS_FILE,)))
 osc_process = Process(target=osc_main, args=(settings,))
