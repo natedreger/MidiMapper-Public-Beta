@@ -76,7 +76,7 @@ def restart_server():
 
 @sio2.on('quit')
 def quit():
-    ledQueue.put("led1.pulseSlow('yellow')")
+    ledQueue.put("led1.pulseSlow('red')")
     end_MIDI()
     time.sleep(1.0)
     print('Exiting')
