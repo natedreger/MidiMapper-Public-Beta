@@ -10,6 +10,8 @@ from colorzero import Color
 from dotenv import load_dotenv
 from multiprocessing import Queue
 from cryptography.fernet import Fernet
+sys.path.insert(0, '/usr/lib/python3/dist-packages')
+
 
 ###### Local Modules #####
 

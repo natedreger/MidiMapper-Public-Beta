@@ -60,6 +60,7 @@ class MidiInput:
         message, deltatime = event
         m = MidiMessage([self.device, message])
         q.put(m)
+        led1.blue()
         # q.put([self.device, message])
 
     def close_MidiInput(self):
@@ -735,11 +736,11 @@ def midi_main():
 
     # main program
     print("Entering MIDI loop. ")
-    led1.green()
     print('waiting for MIDI input')
     try:
         try:
             while True:
+                led1.green()
                 timer = time.time()
                 while midi_mode == 'Mapped':
                     msg = q.get(1)
