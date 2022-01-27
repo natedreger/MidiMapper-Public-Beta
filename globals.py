@@ -42,10 +42,13 @@ class dummyLED():
     def __init__(self):
         pass
     def Color(colorName):
+        print(f'!!!!!!!!!!! LED is {colorName} !!!!!!!')
         pass
     def pulse(self,a,b,**kwargs):
+        print(f'!!!!!!!!!!! LED is pulsing {kwargs} !!!!!!!')
         pass
     def blink(self,a,b,**kwargs):
+        print(f'!!!!!!!!!!! LED is blinking {kwargs} !!!!!!!')
         pass
     def on(self):
         pass
@@ -64,14 +67,17 @@ class customRGBLED(RGBLED):
             print(f'!! {err} !!')
             self.light = dummyLED()
     def blue(self):
+        print(f'!!!!!!!!!!! LED is blue !!!!!!!')
         self.light.color = Color('blue')
     def green(self):
+        print(f'!!!!!!!!!!! LED is green !!!!!!!')
         self.light.color = Color('green')
     def red(self):
         self.light.color = Color('red')
     def yellow(self):
         self.light.color = Color('yellow')
     def orange(self):
+        print(f'!!!!!!!!!!! LED is orange !!!!!!!')
         self.light.color = Color('orange')
     def customColor(self, color):
         self.light.color = Color(color)
