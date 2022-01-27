@@ -20,14 +20,14 @@ import socketio
 import threading
 from multiprocessing import Process
 
-from globals import owner, VERSION, SETTINGS_FILE, settingsCLASS, led1
+from globals import owner, VERSION, SETTINGS_FILE, settingsCLASS
 from modules.logger import *
 from web_interface import server_main
 from midi_mapper import midi_main, end_MIDI
 from osc import osc_main
 from mqttPubSub import *
+from modules.ledControl import *
 
-led1.pulseFast('yellow')
 
 logs.debug(f'app.py running as PID: {os.getpid()} as User: {owner(os.getpid())}')
 
@@ -118,6 +118,7 @@ def terminateProcesses():
 load_settings()
 
 # Create initial MIDI and server processes
+ledThread = threading.Thread(target=ledMain)
 midi_processes.append(Process(target=midi_main,))
 server_processes.append(Process(target=server_main, args=(SETTINGS_FILE,)))
 osc_process = Process(target=osc_main, args=(settings,))
@@ -125,6 +126,7 @@ osc_process = Process(target=osc_main, args=(settings,))
 logs.info(f"{__name__} started")
 
 try:
+    ledThread.start()
     osc_process.start()
     for server_process in server_processes:
         server_process.start()
