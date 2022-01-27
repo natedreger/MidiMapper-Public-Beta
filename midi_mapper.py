@@ -22,7 +22,7 @@ from modules.midioutwrapper import MidiOutWrapper
 from modules.probe_ports import probe_ports, getAvailableIO
 from modules.logger import *
 from modules.keymap import getMappedKeys, searchKeyMap
-from globals import *# owner, connectSocket, publishQueue, settingsCLASS, activeSettings, socketioMessageQueue
+from globals import *
 
 keyMapFile = 'default.json'
 settingsFile = 'settings.json'
@@ -735,6 +735,7 @@ def midi_main():
 
     # main program
     print("Entering MIDI loop. ")
+    led1.green()
     print('waiting for MIDI input')
     try:
         try:
