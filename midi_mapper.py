@@ -136,6 +136,7 @@ devices.load()
 class MidiMessage:
     def __init__(self, message, *type):
         # led1.blue()
+        ledQueue.put('!!!!!!!!!! BLUE !!!!')
         self.indevice=message[0]
         # may need device maps to define channel numbers
         if self.indevice in MidiDevice.knowndevices:
@@ -682,6 +683,7 @@ def mapMode(msg):
     elif (msg.velocity > 0) and (not filter) and (not 'None' in filterInput):
         send_ignore(msg.indevice)
     # led1.green()
+    ledQueue.put('!!!!!!!!!! GREEEN !!!!')
     print('waiting for MIDI input')
 
 
@@ -717,6 +719,7 @@ def thruMode(msg):
         else:
             print(msg.message_type)
     # led1.green()
+    ledQueue.put('!!!!!!!!!! GREEEN !!!!')
     print('waiting for MIDI input')
 
 ############### Main
@@ -754,6 +757,7 @@ def midi_main():
         try:
             while True:
                 # led1.green()
+                ledQueue.put('!!!!!!!!!! GREEEN !!!!')
                 timer = time.time()
                 while midi_mode == 'Mapped':
                     msg = q.get(1)

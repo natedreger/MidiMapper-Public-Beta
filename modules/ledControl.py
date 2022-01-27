@@ -2,6 +2,9 @@
 from gpiozero import RGBLED
 from colorzero import Color
 import sys
+import threading
+from globals import ledQueue
+
 sys.path.insert(0, '/usr/lib/python3/dist-packages')
 
 
@@ -59,7 +62,22 @@ class customRGBLED(RGBLED):
     def pulseFast(self, color):
         self.light.pulse(.75, .75, on_color=Color(color), background=True)
 
+def ledQueueHandler():
+    global led1
+    while True:
+        try:
+            ledCmd = ledQueue.get(1)
+            print(ledCmd)
+            led1.off()
+            sleep(5)
+            led1.pulseFast('green')
+            print(ledCmd)
+            # ledCmd = ledQueue.popleft()
+        except: pass
+
 def ledMain():
-    # ledThreadListener =
+    global led1
+    ledThreadListener = threading.Thread(target=ledQueueHandler)
+    ledThreadListener.start()
     led1 = customRGBLED(17,27,22)
-    led1.pulseFast('yellow')
+    led1.pulseFast('red')
