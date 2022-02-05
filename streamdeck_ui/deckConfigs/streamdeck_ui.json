@@ -1,0 +1,165 @@
+{
+    "streamdeck_ui_version": 1,
+    "state": {
+        "AL14J2C04739": {
+            "buttons": {
+                "0": {
+                    "0": {
+                        "icon": "/home/nate/Documents/streamdeck-UIWeb/Assets/Released.png",
+                        "text": "midi",
+                        "command": "",
+                        "keys": "",
+                        "switch_page": 1,
+                        "brightness_change": 1,
+                        "write": "",
+                        "midi": "[1,24,127]",
+                        "command_type": "MIDI",
+                        "command_string": "1,2,7"
+                    },
+                    "1": {
+                        "command_type": "OSC",
+                        "text": "osc",
+                        "command_string": "kampkrusty.local:8000/app/Spotify/activate"
+                    },
+                    "2": {
+                        "command_type": "MQTT",
+                        "command_string": "KampKrusty/app/Spotify/playpause",
+                        "text": "MQTT"
+                    },
+                    "3": {
+                        "text": "Firefox",
+                        "command_type": "Command",
+                        "command_string": "firefox"
+                    },
+                    "4": {
+                        "command_type": "Page",
+                        "command_string": "2",
+                        "text": "Page2"
+                    },
+                    "5": {
+                        "text": "write text",
+                        "command_type": "Text",
+                        "command_string": "Testing",
+                        "write": "Testing"
+                    },
+                    "6": {
+                        "command_string": ""
+                    },
+                    "7": {},
+                    "8": {},
+                    "9": {
+                        "text": "",
+                        "switch_page": 0
+                    },
+                    "10": {
+                        "text": "25%",
+                        "command_type": "Set Brightness",
+                        "command_string": "25"
+                    },
+                    "11": {
+                        "command_string": "100",
+                        "text": "100%",
+                        "command_type": "Set Brightness"
+                    },
+                    "12": {},
+                    "13": {},
+                    "14": {
+                        "icon": "/home/nate/Documents/streamdeck-UIWeb/Assets/Exit.png",
+                        "command": "",
+                        "keys": "",
+                        "text": "Exit",
+                        "command_type": "CloseStreamDeck",
+                        "command_string": ""
+                    }
+                },
+                "1": {
+                    "0": {},
+                    "1": {},
+                    "2": {},
+                    "3": {},
+                    "4": {},
+                    "5": {},
+                    "6": {},
+                    "7": {},
+                    "8": {},
+                    "9": {},
+                    "10": {},
+                    "11": {},
+                    "12": {},
+                    "13": {},
+                    "14": {
+                        "switch_page": 1,
+                        "text": "Home",
+                        "command_type": "Page",
+                        "command_string": "1"
+                    }
+                },
+                "2": {
+                    "0": {},
+                    "1": {},
+                    "2": {},
+                    "3": {},
+                    "4": {},
+                    "5": {},
+                    "6": {},
+                    "7": {},
+                    "8": {},
+                    "9": {},
+                    "10": {},
+                    "11": {},
+                    "12": {},
+                    "13": {},
+                    "14": {
+                        "text": "Home",
+                        "switch_page": 1,
+                        "command_type": "Page",
+                        "command_string": "1"
+                    }
+                },
+                "3": {
+                    "0": {
+                        "command_type": "Command Type"
+                    },
+                    "1": {},
+                    "2": {},
+                    "3": {},
+                    "4": {},
+                    "5": {},
+                    "6": {},
+                    "7": {},
+                    "8": {},
+                    "9": {},
+                    "10": {},
+                    "11": {},
+                    "12": {},
+                    "13": {},
+                    "14": {
+                        "text": "Home",
+                        "switch_page": 1,
+                        "command_type": "Page",
+                        "command_string": "1"
+                    }
+                },
+                "4": {
+                    "0": {},
+                    "1": {},
+                    "2": {},
+                    "3": {},
+                    "4": {},
+                    "5": {},
+                    "6": {},
+                    "7": {},
+                    "8": {},
+                    "9": {},
+                    "10": {},
+                    "11": {},
+                    "12": {},
+                    "13": {},
+                    "14": {}
+                }
+            },
+            "page": 0,
+            "brightness": 100
+        }
+    }
+}

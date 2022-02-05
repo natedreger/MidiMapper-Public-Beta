@@ -744,15 +744,15 @@ def midi_main():
     if __name__ != '__main__':
         connectSocket(sio, server_addr, socket_port)
 
-    # elif __name__ == '__main__':
-    #     print('\n')
-    #     learn = str(input('Learn MIDI Device? y/n > '))
-    #     if learn == 'y':
-    #         learnMidiDevice()
-    #         pass
-    #     else:
-    #         print('\n')
-    #         pass
+    elif __name__ == '__main__':
+        print('\n')
+        learn = str(input('Learn MIDI Device? y/n > '))
+        if learn == 'y':
+            learnMidiDevice()
+            pass
+        else:
+            print('\n')
+            pass
 
     # main program
     print("Entering MIDI loop. ")
@@ -761,13 +761,13 @@ def midi_main():
     try:
         try:
             while True:
-                # led1.green()
                 timer = time.time()
                 while midi_mode == 'Mapped':
                     msg = q.get(1)
                     mapMode(msg)
                 while midi_mode == 'Thru':
                     msg = q.get(1)
+                    print(msg)
                     thruMode(msg)
                 while midi_mode == 'Bypass':
                     msg = q.get(1)
@@ -776,6 +776,7 @@ def midi_main():
             print(f"{ __name__} - Something Went Wrong with MIDI {err}")
             logs.error(f"{ __name__} - Something Went Wrong with MIDI {err}")
             socketioMessage.send('client_msg', f'Something Went Wrong with MIDI - {err} - Restarting MIDI' )
+            ledQueue.put("led1.blinkFast('red')")
             socketioMessage.send('restart_midi',True)
     except Exception as err:
         save_midiSetting(settings_file, settings)

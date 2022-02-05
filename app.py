@@ -19,8 +19,10 @@ import time
 import socketio
 import threading
 from multiprocessing import Process
+from subprocess import Popen, PIPE, STDOUT
 
-from globals import owner, VERSION, SETTINGS_FILE, settingsCLASS, ledQueue
+import modules.streamDeckHandler
+from globals import owner, VERSION, SETTINGS_FILE, settingsCLASS, ledQueue, streamDeckQueue
 from modules.logger import *
 from web_interface import server_main
 from midi_mapper import midi_main, end_MIDI
@@ -119,6 +121,19 @@ def terminateProcesses():
     osc_process.terminate()
     gc.collect()
 
+def runStreamDeck():
+    CommandData = ''
+    script_path = './streamdeck_ui/guiND.py'
+    p = Popen([sys.executable, '-u', script_path, '-n'], stdout=PIPE, stderr=PIPE)
+    with p.stdout:
+        for line in iter(p.stdout.readline, b''):
+            try:
+                CommandData = json.loads(line.decode())
+                print('StreamDeck Data')
+                streamDeckQueue.put(CommandData)
+            except: pass
+    p.wait()
+
 load_settings()
 
 # Create initial MIDI and server processes
@@ -126,12 +141,16 @@ ledThread = threading.Thread(target=ledQueueHandler)
 midi_processes.append(Process(target=midi_main,))
 server_processes.append(Process(target=server_main, args=(SETTINGS_FILE,)))
 osc_process = Process(target=osc_main, args=(settings,))
+streamdeck = threading.Thread(target=runStreamDeck)
+
+
 
 logs.info(f"{__name__} started")
 
 try:
     ledThread.start()
     osc_process.start()
+    streamdeck.start()
     for server_process in server_processes:
         server_process.start()
     for midi_process in midi_processes:

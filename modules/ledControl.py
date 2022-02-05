@@ -14,13 +14,13 @@ class dummyLED():
     def __init__(self):
         pass
     def Color(colorName):
-        print(f'!!!!!!!!!!! LED is {colorName} !!!!!!!')
+        print(f'Dummy LED is {colorName}')
         pass
     def pulse(self,a,b,**kwargs):
-        print(f'!!!!!!!!!!! LED is pulsing {kwargs} !!!!!!!')
+        print(f'Dummy LED is pulsing {kwargs}')
         pass
     def blink(self,a,b,**kwargs):
-        print(f'!!!!!!!!!!! LED is blinking {kwargs} !!!!!!!')
+        print(f'LED is blinking {kwargs}')
         pass
     def on(self):
         pass
@@ -40,34 +40,39 @@ class customRGBLED(RGBLED):
             print(f'!! {err} !!')
             self.light = dummyLED()
     def blue(self):
-        print(f'!!!!!!!!!!! LED is blue !!!!!!!')
+        print('LED is blue')
         self.light.color = Color('blue')
     def green(self):
-        print(f'!!!!!!!!!!! LED is green !!!!!!!')
+        print('LED is green')
         self.light.color = Color('green')
     def red(self):
         self.light.color = Color('red')
-        print(f'!!!!!!!!!!! LED is red !!!!!!!')
+        print('LED is red')
     def yellow(self):
         self.light.color = Color('yellow')
-        print(f'!!!!!!!!!!! LED is yellow !!!!!!!')
+        print('LED is yellow')
     def orange(self):
-        print(f'!!!!!!!!!!! LED is orange !!!!!!!')
+        print('LED is orange')
         self.light.color = Color('orange')
     def customColor(self, color):
         self.light.color = Color(color)
     def blinkFast(self, color):
+        print(f'LED is blinking fast on {color}')
         self.light.blink(.25, .25, on_color=Color(color))
     def blinkSlow(self, color):
+        print(f'LED is blinking slow on {color}')
         self.light.blink(.5, .5, on_color=Color(color))
     def pulseSlow(self, color):
+        print(f'LED is pulsing slow on {color}')
         self.light.pulse(2,2, on_color=Color(color), background=True)
     def pulseFast(self, color):
+        print(f'LED is pulsing fast on {color}')
         self.light.pulse(.75, .75, on_color=Color(color), background=True)
 
+led1 = customRGBLED(17,27,22)
+led1.pulseFast('yellow')
+
 def ledQueueHandler():
-    led1 = customRGBLED(17,27,22)
-    led1.pulseFast('yellow')
     while True:
         try:
             ledCmd = ledQueue.get(1)

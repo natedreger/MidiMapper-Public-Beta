@@ -27,6 +27,7 @@ user = getpass.getuser()
 publishQueue = Queue()
 socketioMessageQueue = Queue()
 ledQueue = Queue()
+streamDeckQueue = Queue()
 
 if osName == 'Linux':
     path2config = appDir
