@@ -33,7 +33,6 @@ def streamDeckQueueListener():
                 socketioMessage.send('midi_sent', {'data': f"OSC message {host}:{port}{message}"})
                 ledQueue.put('led1.orange()')
             except Exception as err:
-                print(err)
                 socketioMessage.send('client_msg', f"Error: {host}{port} {err}")
             print(host,port,message)
 

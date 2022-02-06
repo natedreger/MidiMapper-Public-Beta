@@ -30,7 +30,6 @@ from osc import osc_main
 from mqttPubSub import *
 from modules.ledControl import *
 
-
 logs.debug(f'app.py running as PID: {os.getpid()} as User: {owner(os.getpid())}')
 
 midi_processes = []
@@ -119,6 +118,7 @@ def terminateProcesses():
     for midi_process in midi_processes:
         midi_process.terminate()
     osc_process.terminate()
+    streamdeck.terminate()
     gc.collect()
 
 def runStreamDeck():
@@ -134,6 +134,7 @@ def runStreamDeck():
             except: pass
     p.wait()
 
+
 load_settings()
 
 # Create initial MIDI and server processes
@@ -141,8 +142,7 @@ ledThread = threading.Thread(target=ledQueueHandler)
 midi_processes.append(Process(target=midi_main,))
 server_processes.append(Process(target=server_main, args=(SETTINGS_FILE,)))
 osc_process = Process(target=osc_main, args=(settings,))
-streamdeck = threading.Thread(target=runStreamDeck)
-
+streamdeck = Process(target=runStreamDeck)
 
 
 logs.info(f"{__name__} started")
