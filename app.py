@@ -123,7 +123,7 @@ def terminateProcesses():
 
 def runStreamDeck():
     CommandData = ''
-    script_path = './streamdeck_ui/guiND.py'
+    script_path = './streamdeck_ui/streamdeck-cli.py'
     p = Popen([sys.executable, '-u', script_path, '-n'], stdout=PIPE, stderr=PIPE)
     with p.stdout:
         for line in iter(p.stdout.readline, b''):

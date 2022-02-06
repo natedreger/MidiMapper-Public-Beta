@@ -326,7 +326,7 @@ def set_page(deck_id: str, page: int) -> None:
         _save_state()
 
 
-def render() -> None:
+def render(decks) -> None:
     """renders all decks"""
     for deck_id, deck_state in state.items():
         deck = decks.get(deck_id, None)
