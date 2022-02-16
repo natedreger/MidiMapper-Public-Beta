@@ -150,7 +150,7 @@ logs.info(f"{__name__} started")
 try:
     ledThread.start()
     osc_process.start()
-    streamdeck.start()
+    # streamdeck.start()
     for server_process in server_processes:
         server_process.start()
     for midi_process in midi_processes:
