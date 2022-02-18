@@ -131,38 +131,6 @@
                 return false;
               });
 
-            $("#restart_midi").click(function(event) {
-                socket.emit('restart_midi', true);
-                return false;
-              });
-
-            $("#restart_server").click(function(event) {
-                socket.emit('restart_server');
-                return false;
-              });
-
-            $("#quit").click(function(event) {
-                if (confirm("You want to Quit MidiMapper?")){
-                  socket.emit('quit')
-                }
-
-                return false;
-              });
-
-            $("#reboot_host").click(function(event) {
-                confirm("You want to Reboot Host Computer?");
-                let passwd = prompt("Enter sudo password", "");
-                socket.emit('reboot', passwd);
-                return false;
-              });
-
-            $("#shutdown_host").click(function(event) {
-                confirm("You want to Shutdown Host Computer?");
-                let passwd = prompt("Enter sudo password", "");
-                socket.emit('shutdown', passwd);
-                return false;
-              });
-
             $("#set_mode").click(function(event) {
                 socket.emit('set_mode', $('#midi_mode').val());
                 return false;
@@ -196,11 +164,6 @@
       <input id="reload_settings" type="button" value="Reload Settings">
       <input id="save_settings" type="button" value="Save Settings">
       <input id="apply_settings" type="button" value="Apply Settings">
-      <input id="restart_midi" type="button" value="Restart MIDI">
-      <input id="restart_server" type="button" value="Restart Server">
-      <input id="quit" type="button" value="Quit">
-      <input id="reboot_host" type="button" value="Reboot Host">
-      <input id="shutdown_host" type="button" value="Shutdown Host">
     </div>
     <div style="padding-top:20px; padding-bottom:20px">
       <form id="settings_form" method="POST" action="#">
