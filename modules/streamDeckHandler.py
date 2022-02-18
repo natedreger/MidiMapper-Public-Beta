@@ -1,4 +1,5 @@
 import threading
+import time
 from pythonosc import udp_client
 from globals import streamDeckQueue, publishQueue, ledQueue, socketioMessage
 
@@ -47,6 +48,7 @@ def streamDeckQueueListener():
             socketioMessage.send('midi_sent', {'data': f"Sent to MQTT topic {topic} message {message}"})
             ledQueue.put('led1.orange()')
             print(topic, message)
+        time.sleep(.1)
 
 sdListen = threading.Thread(target=streamDeckQueueListener)
 sdListen.start()

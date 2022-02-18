@@ -21,7 +21,7 @@ import threading
 from multiprocessing import Process
 from subprocess import Popen, PIPE, STDOUT
 
-import modules.streamDeckHandler
+# import modules.streamDeckHandler
 from globals import owner, VERSION, SETTINGS_FILE, settingsCLASS, ledQueue, streamDeckQueue
 from modules.logger import *
 from web_interface import server_main
@@ -118,21 +118,21 @@ def terminateProcesses():
     for midi_process in midi_processes:
         midi_process.terminate()
     osc_process.terminate()
-    streamdeck.terminate()
+    # streamdeck.terminate()
     gc.collect()
 
-def runStreamDeck():
-    CommandData = ''
-    script_path = './streamdeck_ui/streamdeck-cli.py'
-    p = Popen([sys.executable, '-u', script_path, '-n'], stdout=PIPE, stderr=PIPE)
-    with p.stdout:
-        for line in iter(p.stdout.readline, b''):
-            try:
-                CommandData = json.loads(line.decode())
-                print('StreamDeck Data')
-                streamDeckQueue.put(CommandData)
-            except: pass
-    p.wait()
+# def runStreamDeck():
+#     CommandData = ''
+#     script_path = './streamdeck_cli/streamdeck-cli.py'
+#     p = Popen([sys.executable, '-u', script_path, '-n'], stdout=PIPE, stderr=PIPE)
+#     with p.stdout:
+#         for line in iter(p.stdout.readline, b''):
+#             try:
+#                 CommandData = json.loads(line.decode())
+#                 print('StreamDeck Data')
+#                 streamDeckQueue.put(CommandData)
+#             except: pass
+#     p.wait()
 
 
 load_settings()
@@ -142,7 +142,7 @@ ledThread = threading.Thread(target=ledQueueHandler)
 midi_processes.append(Process(target=midi_main,))
 server_processes.append(Process(target=server_main, args=(SETTINGS_FILE,)))
 osc_process = Process(target=osc_main, args=(settings,))
-streamdeck = Process(target=runStreamDeck)
+# streamdeck = Process(target=runStreamDeck)
 
 
 logs.info(f"{__name__} started")
